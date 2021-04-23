@@ -21,7 +21,7 @@ By setting the device family on the IDF, the build options will change to manage
 
 # Configure
 idf.py menuconfig 
-Remember to set your desired desired bitrate on the MONITOR_BAUD
+Remember to set your desired desired bitrate on the MONITOR_BAUD, if not defaults to 74880
 
 # Build
 idf.py build

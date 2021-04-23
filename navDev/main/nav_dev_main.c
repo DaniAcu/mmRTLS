@@ -7,32 +7,29 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 #include <stdio.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_system.h"
-#include "esp_spi_flash.h"
 
+#include "../src/nvsRegistry.h"
+#include "../src/scanner.h"
+#include "../src/systemInfo.h"
 
 void app_main()
 {
-    printf("nav Dev test!\n");
+    //Boot Information
+    printResetInfo();
+    printChipInfo();
 
-    /* Print chip information */
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    printf("This is ESP chip with %d CPU cores, WiFi, ",
-            chip_info.cores);
-
-    printf("silicon revision %d, ", chip_info.revision);
-
-    printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
-            (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-
-    for (int i = 10; i >= 0; i--) {
-        printf("Restarting in %d seconds...\n", i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    //Initializations
+    int32_t errorCode = initializeNVSRegistry();
+    if (errorCode != ESP_OK) {
+       printf("NVS Registry Error: %d", errorCode);
     }
-    printf("Restarting now.\n");
-    fflush(stdout);
-    esp_restart();
+
+    //Read Mode from configuration
+    //TBD
+
+    //Start Tasks
+    startScanner(); //Mode, Timing?
 }
