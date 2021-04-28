@@ -1,9 +1,10 @@
 #ifndef  SCANNER_H
 #define  SCANNER_H
 #include <stdint.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/Queue.h"
 
-
-#define ROUTER_CHANNEL  1
+#define MAX_WIFI_CHANNELS   14
 
 enum 
 {
@@ -14,5 +15,6 @@ enum
     WIFI_COUNTRY_MAX
 };
 
-int32_t startScanner(void);
+int32_t startScanner(char channels, unsigned int timeBetweenChannels, QueueHandle_t messageQueue);
+
 #endif //SCANNER_H

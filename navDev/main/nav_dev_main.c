@@ -11,25 +11,30 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "../src/nvsRegistry.h"
-#include "../src/scanner.h"
 #include "../src/systemInfo.h"
+#include "../src/nvsRegistry.h"
+#include "../src/RSSIData.h"
+#include "../src/scanner.h"
+#include "../src/mqttClient.h"
 
 void app_main()
 {
-    //Boot Information
-    printResetInfo();
-    printChipInfo();
+   //Boot Information
+   printResetInfo();
+   printChipInfo();
 
     //Initializations
-    int32_t errorCode = initializeNVSRegistry();
-    if (errorCode != ESP_OK) {
-       printf("NVS Registry Error: %d", errorCode);
-    }
+   int32_t errorCode = initializeNVSRegistry();
+   if (errorCode != ESP_OK) {
+      printf("NVS Registry Error: %d", errorCode);
+   }
 
-    //Read Mode from configuration
-    //TBD
+   //Read Mode from configuration
+   //TBD
 
-    //Start Tasks
-    startScanner(); //Mode, Timing?
+   //Start Tasks
+   QueueHandle_t rssiMessageQueue = createRSSIDataMessageQueue(16);
+   //Start Tasks
+   startScanner(/* Number of channels*/ 14, /*Time between channels in Ms*/ 1000, rssiMessageQueue);
+   startMqttclient(rssiMessageQueue);
 }
