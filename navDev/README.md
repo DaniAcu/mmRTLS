@@ -3,6 +3,22 @@
 FreeRTOS based implementation of a Navigation device to run in ESP based devices.
 By setting the device family on the IDF, the build options will change to manage the available modes.
 
+# Main components
+![image](https://user-images.githubusercontent.com/5400635/116485484-b82a3500-a861-11eb-9d43-a35ba54991ec.png)
+
+Scanner: 
+- Starts the wifi promiscuous listening mode
+- Start a task that cycles between channels
+- Sends processed RSSI data into a queue
+
+
+Msg Processor: process raw packets from wifi and returns mac & RSSI data
+
+
+MQTT CLient: listen for new RSSI data and based on configured criteria packs a bundle of packets and sends it to a topic
+
+Connection handler, resolves wifi connection as a client to an Access Point
+
 # Setup
 1. Configure properly your toolchain
     https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/macos-setup.html    
