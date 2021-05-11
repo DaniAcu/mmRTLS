@@ -16,9 +16,12 @@
 #include "../src/RSSIData.h"
 #include "../src/scanner.h"
 #include "../src/mqttClient.h"
+#include "../src/wifiHandler.h"
 
-void app_main()
-{
+#include "wifiConfig.h"
+
+void app_main() {
+   
    //Boot Information
    printResetInfo();
    printChipInfo();
@@ -31,10 +34,11 @@ void app_main()
 
    //Read Mode from configuration
    //TBD
+   QueueHandle_t rssiMessageQueue = createRSSIDataMessageQueue(WIFI_RSSIDATA_QUEUE_SIZE);
+   
+   //Start Tasks
+   wifiHandlerStart(WIFI_CHANNEL_MAX, wifiScannerPacketHandler);
+   wifiScannerStart(WIFI_CHANNEL_MAX, WIFI_SCAN_TIME_MS_BTW_CH, rssiMessageQueue, wifiHandlerGetEventGroup());
+   startMqttclient(rssiMessageQueue, wifiHandlerGetEventGroup());
 
-   //Start Tasks
-   QueueHandle_t rssiMessageQueue = createRSSIDataMessageQueue(16);
-   //Start Tasks
-   startScanner(/* Number of channels*/ 14, /*Time between channels in Ms*/ 1000, rssiMessageQueue);
-   startMqttclient(rssiMessageQueue);
 }

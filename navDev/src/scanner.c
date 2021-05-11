@@ -1,7 +1,8 @@
+#include "wifiConfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "freertos/Queue.h"
+#include "freertos/queue.h"
 
 #include "scanner.h"
 
@@ -11,17 +12,27 @@
 #include "nvs_flash.h"
 
 #include "packetProcessor.h"
+#include "wifiHandler.h"
 
 //Global Data
-static EventGroupHandle_t wifi_event_group;
-static const int START_BIT = BIT0;
+static wifi_handler_data_t wifi_data ;
 QueueHandle_t scannerMessageQueue;
+
+
+typedef struct scannerParams {
+    uint8_t  channels;
+    uint16_t timeBetweenChannels;
+} scannerParams;
+
+static void wifiScannerSetChannel(uint8_t channel){
+  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+}
 
 //-- Event Handlers start --
 void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
 {
   wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buffer;
-  
+ 
   if (type == 0) {
     rssiData_t rssiData = processWifiPacket(&(pkt->rx_ctrl),  pkt->payload);
     if (rssiData.isValid) {
@@ -30,102 +41,57 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
   }
 }
 
-static void wifiEventhandler(void* arg, esp_event_base_t event_base,  int32_t event_id, void* event_data)
-{
-  //Wifi module has properly Started
-  if (event_id == WIFI_EVENT_STA_START) {
-        xEventGroupSetBits(wifi_event_group, START_BIT);
-  }
-}
-//-- Event Handlers end --
-
-// -- Internal Functions start --
-void wifiScannerSetChannel(uint8_t channel)
-{
-  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-}
-
-void wifiScannerInit(char channels)
-{
-  nvs_flash_init();
-  tcpip_adapter_init();
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-  wifi_event_group = xEventGroupCreate();
-
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-  ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifiEventhandler, NULL));
-
-  wifi_country_t wificountry = {
-    .cc = "CN",
-    .schan = 1,
-    .nchan = channels
-  };
-  
-  ESP_ERROR_CHECK(esp_wifi_set_country(&wificountry));
-  ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM))
-  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-  ESP_ERROR_CHECK(esp_wifi_start());
-}
-// -- Internal Functions end --
-
-
-typedef struct scannerParams {
-    char  channels;
-    int   timeBetweenChannels;
-} scannerParams;
-
 //Task
-void scannerTask(void *pvParameter)
-{
-    printf("scannerTask Started\n");
-    scannerParams *params = (scannerParams *) pvParameter;
+void scannerTask(void *pvParameter) {
+  EventBits_t xBits;
+  scannerParams *params = (scannerParams *) pvParameter;
+  uint8_t channel = params->channels;
 
-    printf("Waiting Wifi Module to Start\n");
-    xEventGroupWaitBits(wifi_event_group, START_BIT, false, true, portMAX_DELAY);
-    printf("Wifi Module Started, configuring promiscuous mode\n");
-    
-    ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(&wifiScannerPacketHandler));
-    
-    wifi_promiscuous_filter_t snifferFilter = {0};
-    // Filter data and mgmt packets, only interested in the control ones (WIFI_PROMIS_FILTER_MASK_CTRL)
-    snifferFilter.filter_mask = WIFI_PROMIS_FILTER_MASK_DATA | WIFI_PROMIS_FILTER_MASK_MGMT;
-    
-    if (snifferFilter.filter_mask != 0) {
-      ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&snifferFilter));
-    }
+  printf("[scannerTask] Started, Waiting wifi module to be ready\n");
+  xEventGroupWaitBits(wifi_data.eventGroup, WIFI_READY, false, true, portMAX_DELAY);
+  
+  printf("[scannerTask] Wifi module ready\n");
+  wifiHandlerScanMode(true);
+  
+  for (;;) {      
+    xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_SCAN_START | WIFI_SCAN_STOP, false, false, portMAX_DELAY);
 
-    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(true));
-    char channel = 1;
-
-    for (;;) {
-        printf("Scanning Channel %d, %d mseg\n", channel, params->timeBetweenChannels);
-        wifiScannerSetChannel(channel);
-
-        vTaskDelay(params->timeBetweenChannels / portTICK_RATE_MS);
-
-        if (++channel > params->channels) {
-          channel = 1;
-        }
-    }
+    if (xBits & WIFI_SCAN_START) {
+      if (++channel >= params->channels) {
+        channel = 1;       
+      }
+      printf("Scanning Channel %d of %d, %d mseg\n", channel, params->channels, params->timeBetweenChannels);
+      wifiScannerSetChannel(channel);
+    } 
+    vTaskDelay(params->timeBetweenChannels / portTICK_RATE_MS);    
+  }
 }
 
 //Exposed API
-int32_t startScanner(char channels, unsigned int timeBetweenChannels, QueueHandle_t messageQueue)
+int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueHandle_t messageQueue, EventGroupHandle_t eventGroup)
 {
-    if (channels >= MAX_WIFI_CHANNELS) {
-      channels = MAX_WIFI_CHANNELS;
+   if (eventGroup == NULL) {
+      printf("wifiScannerStart: eventGroup can be null \n");
+      return ESP_ERR_INVALID_ARG;
+   }
+
+    wifi_data.eventGroup = eventGroup;
+    if (nChannels >= WIFI_CHANNEL_MAX) {
+      nChannels = WIFI_CHANNEL_MAX;
     }
 
-    wifiScannerInit(channels);
-
     static scannerParams params;
-    params.channels = channels;
+    params.channels = nChannels;
     params.timeBetweenChannels = timeBetweenChannels;
     scannerMessageQueue = messageQueue;
 
     xTaskCreate(&scannerTask, "scannerTask", 2048, &params, 3, NULL);
 
     return ESP_OK;
+}
+
+void Wifi_PrintDebug(const char *log) {
+  #if (1  == WIFI_VERBOSE )
+    printf(log);
+  #endif
 }

@@ -1,5 +1,5 @@
 #include "packetProcessor.h"
-#include "esp_libc.h"
+#include "wifiConfig.h"
 
 typedef struct 
 {
@@ -12,15 +12,19 @@ typedef struct
   uint8_t addr4[6]; /* optional */
 } __attribute__((packed)) wifi_ieee80211_mac_hdr_t;
 
-typedef struct 
-{
+typedef struct  {
   wifi_ieee80211_mac_hdr_t hdr;
   uint8_t payload[0]; /* network data ended with 4 bytes csum (CRC32) */
 } __attribute__((packed)) wifi_ieee80211_packet_t;
 
-rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload)
-{
-    int len = crtPkt->sig_mode ? crtPkt->HT_length : crtPkt->legacy_length;
+rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload) {
+
+#ifdef TARGET_ESP32 
+  int len = crtPkt->sig_len;  // ESP32
+#else 
+  int len = crtPkt->sig_mode ? crtPkt->HT_length : crtPkt->legacy_length;  // ESP8266
+#endif
+
     rssiData_t rssiData = {
         
     };
