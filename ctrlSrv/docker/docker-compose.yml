@@ -1,0 +1,33 @@
+version: '2'
+services:
+    mosquitto:
+      container_name: mosquitto_1
+      image: eclipse-mosquitto
+      restart: unless-stopped
+      user: "1883"
+      ports:
+        - 1883:1883
+        - 9001:9001
+      volumes:
+        - ./volumes/mosquitto/data:/mosquitto/data
+        - ./volumes/mosquitto/log:/mosquitto/log
+        - ./services/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+
+    mariadb:
+      image: linuxserver/mariadb
+      container_name: mariadb_1
+      env_file:
+        - ./services/mariadb/mariadb.env
+      volumes:
+        - ./volumes/mariadb/config:/config
+      ports:
+        - 3306:3306
+      restart: unless-stopped
+
+    adminer:
+      container_name: adminer
+      image: adminer
+      restart: unless-stopped
+      ports:
+        - 9080:8080

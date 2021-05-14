@@ -11,3 +11,18 @@ It's conformed by the following components:
 - A Processor service, which will be listening the device topics and process the device location to store in a database
 - A CRUD REST service to consume the database with simple defined models.
 - An App (not shown) which will provide a visual interface to visualize the REST API
+
+# Default port
+Data base: 3306
+Mqtt: 1883
+
+# Install
+Install [docker](https://docs.docker.com/engine/install/) and [docker compose](https://docs.docker.com/compose/install/)
+
+# Setup
+Update config in [MariaDb Settings](https://github.com/mlorenzati/mmRTLS/blob/main/ctrlSrv/docker/services/mariadb/mariadb.env)
+Update config in [mosquitto](https://github.com/mlorenzati/mmRTLS/main/contrServDocker/ctrlSrv/docker/services/mosquitto/mosquitto.conf) to use authentication
+
+# Run
+Go to docker folder and run:
+´docker-compose up -d´
