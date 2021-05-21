@@ -16,25 +16,26 @@
 
 static const char *TAG = "wifi station";
 static wifi_handler_data_t wifi_data;
-
+static uint8_t lastChannel = 1;
 /** 
  * wifi events 
  */
 static void wifiEventhandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
    if (event_base == WIFI_EVENT) {
-      if (event_id == WIFI_EVENT_STA_START) {
+      if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+         ESP_LOGI(TAG, "[wifiEventhandler] WIFI_EVENT_STA_DISCONNECTED");
+         xEventGroupSetBits(  wifi_data.eventGroup, WIFI_DISCONNECTED|WIFI_SCAN_STOP);
+         xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONNECTED|WIFI_CONNECTING);
+         wifihandlerSetChannel(wifiHandlerGetSavedChannel());
+      }else if (event_id == WIFI_EVENT_STA_START) {
          xEventGroupSetBits(wifi_data.eventGroup, WIFI_READY);
-      } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-         xEventGroupSetBits(  wifi_data.eventGroup, WIFI_DISCONNECTED);
-         xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONNECTED);
-
       }
    } else if (event_base == IP_EVENT) {
       if (event_id == IP_EVENT_STA_GOT_IP) {
          ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
          ESP_LOGI(TAG, "[wifiEventhandler] got ip:" IPSTR, IP2STR(&event->ip_info.ip));
          xEventGroupSetBits(wifi_data.eventGroup, WIFI_CONNECTED);
-         xEventGroupClearBits(wifi_data.eventGroup, WIFI_DISCONNECTED);
+         xEventGroupClearBits(wifi_data.eventGroup, WIFI_DISCONNECTED|WIFI_CONNECTING);
       }
    }
 }
@@ -98,11 +99,11 @@ int32_t wifiHandlerStart(uint8_t nChannels, wifi_promiscuous_cb_t wifiPacketHand
       ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&snifferFilter));
    }
    
-   xTaskCreate( wifiHandlerAPTask, (const char *)"wifiHandlerAPTask", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY+1, NULL);
+   xTaskCreate( wifiHandlerAPTask, (const char *)"wifiHandlerAPTask", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY+1, NULL);
    return ESP_OK;
 }
 
-void wifihandlerSetChannels(uint8_t channel) {
+void wifihandlerSetChannel(uint8_t channel) {
    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
@@ -110,9 +111,21 @@ int32_t wifiHandlerScanMode(bool enabled) {
    xEventGroupClearBits(wifi_data.eventGroup, enabled ? WIFI_SCAN_STOP  : WIFI_SCAN_START);
    xEventGroupSetBits(  wifi_data.eventGroup, enabled ? WIFI_SCAN_START : WIFI_SCAN_STOP);   
 
+   if( true == enabled ){
+      xEventGroupWaitBits(wifi_data.eventGroup, WIFI_DISCONNECTED , false, true, portMAX_DELAY);
+   }
+
    ESP_ERROR_CHECK(esp_wifi_set_promiscuous(enabled));
 
    return ESP_OK;
+}
+
+void wifiHandlerSaveChannel(uint8_t currentChan){
+   lastChannel = currentChan;
+}
+
+uint8_t wifiHandlerGetSavedChannel(void){
+   return lastChannel;
 }
 
 EventGroupHandle_t wifiHandlerGetEventGroup(void)
@@ -145,7 +158,7 @@ void wifiHandlerAPTask( void* taskParmPtr ) {
    for (;;) {
       xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_DISCONNECTED | WIFI_CONNECTED | WIFI_SCAN_START | WIFI_SCAN_STOP, false, false, portMAX_DELAY);
       
-      if ((xBits & WIFI_DISCONNECTED) && !(xBits & WIFI_CONNECTING) && (xBits & WIFI_SCAN_STOP)) {
+      if ((xBits & WIFI_DISCONNECTED) && !(xBits & WIFI_CONNECTING) && (xBits & WIFI_SCAN_STOP) && !(xBits & WIFI_SCAN_START) ) {
          if (++retryConCnt > WIFI_RECONNECT_TRIES) {
             retryConCnt = 0;
             xEventGroupSetBits(wifi_data.eventGroup, WIFI_CONN_FAILED);
@@ -157,9 +170,7 @@ void wifiHandlerAPTask( void* taskParmPtr ) {
          xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONNECTED);
          xEventGroupSetBits(wifi_data.eventGroup, WIFI_CONNECTING);
       } else if ( (xBits & WIFI_CONNECTED ) && (xBits & WIFI_CONNECTING )  ) {
-         xEventGroupClearBits(wifi_data.eventGroup, WIFI_DISCONNECTED);
-         xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONN_FAILED);
-         xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONNECTING);
+         xEventGroupClearBits(wifi_data.eventGroup, WIFI_DISCONNECTED|WIFI_CONN_FAILED|WIFI_CONNECTING);
          retryConCnt = 0;
       } else if ( (xBits & WIFI_SCAN_START ) && (xBits & WIFI_CONNECTED ) ){
          esp_wifi_disconnect();

@@ -44,7 +44,17 @@ int32_t wifiHandlerScanMode(bool enabled);
 /**
  * @brief
  */
-void wifihandlerSetChannels(uint8_t channel);
+void wifihandlerSetChannel(uint8_t channel);
+
+/**
+ * @brief
+ */
+void wifiHandlerSaveChannel(uint8_t currentChan);
+
+/**
+ * @brief
+ */
+uint8_t wifiHandlerGetSavedChannel(void);
 
 /**
  * @brief

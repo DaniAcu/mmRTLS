@@ -24,9 +24,6 @@ typedef struct scannerParams {
     uint16_t timeBetweenChannels;
 } scannerParams;
 
-static void wifiScannerSetChannel(uint8_t channel){
-  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
-}
 
 //-- Event Handlers start --
 void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
@@ -54,14 +51,15 @@ void scannerTask(void *pvParameter) {
   wifiHandlerScanMode(true);
   
   for (;;) {      
-    xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_SCAN_START | WIFI_SCAN_STOP, false, false, portMAX_DELAY);
+    xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_SCAN_START | WIFI_DISCONNECTED , false, true, portMAX_DELAY);
 
     if (xBits & WIFI_SCAN_START) {
       if (++channel >= params->channels) {
         channel = 1;       
       }
       printf("Scanning Channel %d of %d, %d mseg\n", channel, params->channels, params->timeBetweenChannels);
-      wifiScannerSetChannel(channel);
+      wifiHandlerSaveChannel(channel);
+      wifihandlerSetChannel(channel);
     } 
     vTaskDelay(params->timeBetweenChannels / portTICK_RATE_MS);    
   }
