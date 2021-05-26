@@ -17,6 +17,7 @@
 #include "../src/scanner.h"
 #include "../src/mqttClient.h"
 #include "../src/wifiHandler.h"
+#include "../src/sntpUpdate.h"
 
 #include "wifiConfig.h"
 
@@ -39,6 +40,6 @@ void app_main() {
    //Start Tasks
    wifiHandlerStart(WIFI_CHANNEL_MAX, wifiScannerPacketHandler);
    wifiScannerStart(WIFI_CHANNEL_MAX, WIFI_SCAN_TIME_MS_BTW_CH, rssiMessageQueue, wifiHandlerGetEventGroup());
-   startMqttclient(rssiMessageQueue, wifiHandlerGetEventGroup());
-
+   mqttClientStart( rssiMessageQueue, wifiHandlerGetEventGroup() );
+   sntpUpdateStart( wifiHandlerGetEventGroup() );
 }

@@ -16,10 +16,16 @@ extern void Wifi_PrintDebug(const char *log);
 #define WIFI_VERBOSE                1
 
 /*===================== AP =========================*/
-#define WIFI_SSID                   "JulianAP"  // test_ pasar a flash
-#define WIFI_PASS                   "isaac1234" // test_ pasar a flash
+//#define WIFI_SSID                   "JulianAP"  // test_ pasar a flash
+//#define WIFI_PASS                   "isaac1234" // test_ pasar a flash
 #define WIFI_RETRY_MAX              5
 
+#ifndef WIFI_SSID
+#error Set the Access Point SSID in WIFI_SSID
+#endif 
+#ifndef WIFI_PASS
+#error Set the Access Point password in WIFI_PASS
+#endif 
 
 
 #ifdef __cplusplus

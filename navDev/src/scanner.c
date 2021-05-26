@@ -13,6 +13,7 @@
 
 #include "packetProcessor.h"
 #include "wifiHandler.h"
+#include "sntpUpdate.h"
 
 //Global Data
 static wifi_handler_data_t wifi_data ;
