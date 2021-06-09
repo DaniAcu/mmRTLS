@@ -95,7 +95,7 @@ export class PositionController {
     return this.positionRepository.updateAll(position, where);
   }
 
-  @get('/positions/{id}')
+  @get('/positions/{positionId}')
   @response(200, {
     description: 'Position model instance',
     content: {
@@ -105,18 +105,18 @@ export class PositionController {
     },
   })
   async findById(
-    @param.path.number('id') id: number,
+    @param.path.number('positionId') id: number,
     @param.filter(Position, {exclude: 'where'}) filter?: FilterExcludingWhere<Position>
   ): Promise<Position> {
     return this.positionRepository.findById(id, filter);
   }
 
-  @patch('/positions/{id}')
+  @patch('/positions/{positionId}')
   @response(204, {
     description: 'Position PATCH success',
   })
   async updateById(
-    @param.path.number('id') id: number,
+    @param.path.number('positionId') positionId: number,
     @requestBody({
       content: {
         'application/json': {
@@ -126,25 +126,25 @@ export class PositionController {
     })
     position: Position,
   ): Promise<void> {
-    await this.positionRepository.updateById(id, position);
+    await this.positionRepository.updateById(positionId, position);
   }
 
-  @put('/positions/{id}')
+  @put('/positions/{positionId}')
   @response(204, {
     description: 'Position PUT success',
   })
   async replaceById(
-    @param.path.number('id') id: number,
+    @param.path.number('positionId') positionId: number,
     @requestBody() position: Position,
   ): Promise<void> {
-    await this.positionRepository.replaceById(id, position);
+    await this.positionRepository.replaceById(positionId, position);
   }
 
-  @del('/positions/{id}')
+  @del('/positions/{positionId}')
   @response(204, {
     description: 'Position DELETE success',
   })
-  async deleteById(@param.path.number('id') id: number): Promise<void> {
-    await this.positionRepository.deleteById(id);
+  async deleteById(@param.path.number('positionId') positionId: number): Promise<void> {
+    await this.positionRepository.deleteById(positionId);
   }
 }

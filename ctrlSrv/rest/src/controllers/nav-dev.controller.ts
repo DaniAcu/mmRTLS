@@ -95,7 +95,7 @@ export class NavDevController {
     return this.navDevRepository.updateAll(navDev, where);
   }
 
-  @get('/nav-devs/{id}')
+  @get('/nav-devs/{navId}')
   @response(200, {
     description: 'NavDev model instance',
     content: {
@@ -105,18 +105,18 @@ export class NavDevController {
     },
   })
   async findById(
-    @param.path.number('id') id: number,
+    @param.path.number('navId') navId: number,
     @param.filter(NavDev, {exclude: 'where'}) filter?: FilterExcludingWhere<NavDev>
   ): Promise<NavDev> {
-    return this.navDevRepository.findById(id, filter);
+    return this.navDevRepository.findById(navId, filter);
   }
 
-  @patch('/nav-devs/{id}')
+  @patch('/nav-devs/{navId}')
   @response(204, {
     description: 'NavDev PATCH success',
   })
   async updateById(
-    @param.path.number('id') id: number,
+    @param.path.number('navId') navId: number,
     @requestBody({
       content: {
         'application/json': {
@@ -126,25 +126,25 @@ export class NavDevController {
     })
     navDev: NavDev,
   ): Promise<void> {
-    await this.navDevRepository.updateById(id, navDev);
+    await this.navDevRepository.updateById(navId, navDev);
   }
 
-  @put('/nav-devs/{id}')
+  @put('/nav-devs/{navId}')
   @response(204, {
     description: 'NavDev PUT success',
   })
   async replaceById(
-    @param.path.number('id') id: number,
+    @param.path.number('navId') navId: number,
     @requestBody() navDev: NavDev,
   ): Promise<void> {
-    await this.navDevRepository.replaceById(id, navDev);
+    await this.navDevRepository.replaceById(navId, navDev);
   }
 
-  @del('/nav-devs/{id}')
+  @del('/nav-devs/{navId}')
   @response(204, {
     description: 'NavDev DELETE success',
   })
-  async deleteById(@param.path.number('id') id: number): Promise<void> {
-    await this.navDevRepository.deleteById(id);
+  async deleteById(@param.path.number('navId') navId: number): Promise<void> {
+    await this.navDevRepository.deleteById(navId);
   }
 }

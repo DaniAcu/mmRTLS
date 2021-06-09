@@ -1,5 +1,5 @@
 import { Entity, model, property, hasMany } from '@loopback/repository';
-import { Position } from '.';
+import {Position} from './position.model';
 
 @model()
 export class NavDev extends Entity {
@@ -28,10 +28,9 @@ export class NavDev extends Entity {
   })
   lastConnected: string;
 
-  
-  @hasMany(() => Position)
-  position: Position[];
-  
+  @hasMany(() => Position, {keyTo: 'navId'})
+  positions: Position[];
+
   constructor(data?: Partial<NavDev>) {
     super(data);
   }
