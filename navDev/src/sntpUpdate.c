@@ -40,7 +40,7 @@ static void sntpUpdateTime(void)
     time_t now = 0;
     struct tm timeinfo = { 0 };
     int retry = 0;
-    const int retry_count = 3;
+    const int retry_count = 5;
    
     sntpUpdateInitialize();
 

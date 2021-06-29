@@ -27,6 +27,7 @@
 
 #include "wifiHandler.h"
 #include "cJSON.h"
+#include "utils.h"
 
 static const char *TAG = "MQTTS_CLIENT";
 
@@ -45,6 +46,12 @@ typedef struct{
     esp_mqtt_client_handle_t client;
 }mqttClient_t;
 
+typedef struct{
+    char *MACstr;
+    cJSON *root;
+    cJSON *array;
+}cJSON_AppMACsEntity_t;
+
 static mqttClient_t mqttClientInstance = { NULL, NULL, NULL, NULL, NULL };
 
 static void mqttClientTask( void *pvParameter );
@@ -53,9 +60,9 @@ static void mqttClientInitClient( mqttClient_t *me );
 static void mqttClientStopClient( mqttClient_t *me );
 static void mqttClientDisconnect( mqttClient_t *me );
 static void mqttClientConnect( mqttClient_t *me  );
-static void mqttClientPacketRSSICleanup( cJSON** pEntity );
-static int mqttClientPacketRSSIInjectData( cJSON** pEntity, rssiData_t *pData );
-static int mqttClientPacketRSSIPublish( mqttClient_t *me, cJSON* pEntity );
+static void mqttClientPacketRSSICleanup( cJSON_AppMACsEntity_t* pEntity );
+static int mqttClientPacketRSSIInjectData( cJSON_AppMACsEntity_t* pEntity, rssiData_t *pData );
+static int mqttClientPacketRSSIPublish( mqttClient_t *me, cJSON_AppMACsEntity_t* pEntity );
 
 /*====================================================================================*/
 static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
@@ -105,9 +112,14 @@ static void mqttClientTask( void *pvParameter )
 {
     mqttClient_t *me = (mqttClient_t*)pvParameter;
     rssiData_t rssiData;    
-    uint8_t count = 0; 
-    cJSON *UplinkPacket_Scan = NULL;  /*the root entity to serialize the JSON output*/
+    uint8_t count = 0;  
+    cJSON_AppMACsEntity_t UplinkPacket_Scan = {NULL, NULL, NULL };  /*the root entity to serialize the JSON output*/
+    uint8_t thisMAC[6] = {0};
+    char thisMACStr[32] = { 0 };
 
+    UplinkPacket_Scan.MACstr = thisMACStr;
+    esp_wifi_get_mac( WIFI_IF_STA, thisMAC ); 
+    utilsMAC2str( thisMAC, thisMACStr, sizeof(thisMACStr) ); 
     mqttClientInitClient( me );
     printf("mqtt_ClientTask Started, waiting for messages\n");   
 
@@ -129,7 +141,7 @@ static void mqttClientTask( void *pvParameter )
             mqttClientConnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_CONNECTED | MQTT_CLIENT_SUBSCRIBED, true, true, portMAX_DELAY );
             printf("[mqttClientTask] Sending data...\n");
-            mqttClientPacketRSSIPublish( me, UplinkPacket_Scan );
+            mqttClientPacketRSSIPublish( me, &UplinkPacket_Scan );
             /*
             waiting for MQTT_CLIENT_EVENT_PUBLISHED causes this error on the mqtt client:
             E (9184) TRANSPORT_BASE: ssl_poll_read select error 104, errno = Connection reset by peer, fd = 54
@@ -150,11 +162,11 @@ static void mqttClientTask( void *pvParameter )
     }
 }
 /*====================================================================================*/
-static int mqttClientPacketRSSIPublish( mqttClient_t *me, cJSON* pEntity )
+static int mqttClientPacketRSSIPublish( mqttClient_t *me, cJSON_AppMACsEntity_t* pEntity )
 {
     int retValue = -1;
     char *json_string;
-    json_string = cJSON_Print( pEntity );
+    json_string = cJSON_Print( pEntity->root );
     if( NULL != json_string ) {
         ESP_LOGI(TAG, "esp_mqtt_client_publish, ret/msg_id=%d", esp_mqtt_client_publish( me->client, CONFIG_MQTT_TOPIC_DATA, json_string , 0, 1, 0) );
         cJSON_free( json_string );
@@ -166,21 +178,38 @@ static int mqttClientPacketRSSIPublish( mqttClient_t *me, cJSON* pEntity )
     return retValue;
 }
 /*====================================================================================*/
-static int mqttClientPacketRSSIInjectData( cJSON** pEntity, rssiData_t *pData )
+static int mqttClientPacketRSSIInjectData( cJSON_AppMACsEntity_t* pEntity, rssiData_t *pData )
 {
     int retValue = -1;
     cJSON *iEntry;
-    if( NULL == *pEntity ){
-        *pEntity = cJSON_CreateObject();
+    if( NULL == pEntity->root ){
+        pEntity->root = cJSON_CreateObject();
+        pEntity->array = NULL;
+        cJSON *name = NULL;
+        
+        pEntity->array = cJSON_CreateArray();
+        name = cJSON_CreateString( pEntity->MACstr );
+         
+        if( ( NULL != name ) && ( NULL != pEntity->array ) ){
+            cJSON_AddItemToObject( pEntity->root, "navDevMac", name);
+            cJSON_AddItemToObject( pEntity->root, "Beacons", pEntity->array );
+        }
+        else{
+            printf("[mqttClientTask] {cJSON} : Cant allocate a new subentity...\n");
+        }
+        
     }
    
     if( NULL != ( iEntry = cJSON_CreateObject() ) ){
         char iMACstr[ 32 ] = { 0 };
-        snprintf(iMACstr, sizeof(iMACstr), "%02X:%02X:%02X:%02X:%02X:%02X",pData->mac[0], pData->mac[1], pData->mac[2], pData->mac[3], pData->mac[4], pData->mac[5]);
-        cJSON_AddItemToObject( *pEntity, iMACstr, iEntry ); 
+        utilsMAC2str( pData->mac, iMACstr, sizeof(iMACstr) );
+        
+        cJSON_AddStringToObject( iEntry, "mac",   iMACstr );
         cJSON_AddNumberToObject( iEntry, "channel",   pData->channel );
         cJSON_AddNumberToObject( iEntry, "rssi",	  pData->rssi);
         cJSON_AddNumberToObject( iEntry, "timestamp", pData->timestamp);   
+        cJSON_AddItemToObject( pEntity->array, iMACstr, iEntry ); 
+
         printf("[mqttClientTask] Message - Mac=%s, RSSI=%d, channel=%d\n", iMACstr, pData->rssi, pData->channel );
         retValue = 0;   
     }
@@ -190,12 +219,14 @@ static int mqttClientPacketRSSIInjectData( cJSON** pEntity, rssiData_t *pData )
     return retValue;
 }
 /*====================================================================================*/
-static void mqttClientPacketRSSICleanup( cJSON** pEntity )
+static void mqttClientPacketRSSICleanup( cJSON_AppMACsEntity_t* pEntity )
 {
-    if( NULL != *pEntity ){
-        cJSON_Delete( *pEntity ); /*Delete the cJSON root entity and all subentities recursively*/
+    if( NULL != pEntity->root ){
+        cJSON_Delete( pEntity->root ); /*Delete the cJSON root entity and all subentities recursively*/
+        //cJSON_Delete( pEntity->array );
     }
-    *pEntity = NULL;
+    pEntity->root = NULL;
+    pEntity->array = NULL;
 }
 /*====================================================================================*/
 esp_err_t mqttClientStart( QueueHandle_t messageQueue, EventGroupHandle_t eventGroup )

@@ -7,7 +7,7 @@ typedef struct
   int8_t    rssi;         /* rssi power in dbm */
   uint8_t   channel;      /* the channel where the mac is located */
   bool      isValid;      /* the object is Valid */
-  uint32_t  timestamp;    /* local unix time*/
+  uint64_t  timestamp;    /* local unix time*/
 } rssiData_t;
 
 #define createRSSIDataMessageQueue(queueSize) xQueueCreate( queueSize, sizeof( rssiData_t ))
