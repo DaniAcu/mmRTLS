@@ -12,6 +12,9 @@ export class Position extends Entity {
 
   @property({
     type: 'number',
+    dataType: 'float',
+    precision: 20,
+    scale: 5, 
     generated: false,
     required: true,
   })
@@ -19,6 +22,9 @@ export class Position extends Entity {
 
   @property({
     type: 'number',
+    dataType: 'float',
+    precision: 20,
+    scale: 5, 
     generated: false,
     required: true,
   })
