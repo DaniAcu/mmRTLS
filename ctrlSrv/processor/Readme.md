@@ -3,7 +3,7 @@ This app connects to an MQTT broker, listens to information from navDev Topic, p
 
 # Setup
 Configure the application by modifying appConfig.json in config folder
-´´´
+```
 {
     "appName" : "node-rssi-processor",
     "mqtt" : {
@@ -33,7 +33,7 @@ Configure the application by modifying appConfig.json in config folder
         "filterByKnowBeacons" : true
     }
 }
-´´´
+```
 
 # Install
 Just do npm install
@@ -46,7 +46,7 @@ Just do npm start
 
 # Dry run
 With the initial config, publish to ´rssi´ topic the following test json
-´´´
+```
 {
     "navDevMac": "AA::BB:CC:DD:EE:FF",
     "Beacons":
@@ -77,7 +77,7 @@ With the initial config, publish to ´rssi´ topic the following test json
         }
     ]
 }
-´´´
+```
 It should store the aprox position (4.7 , 3) to the device MAC "AA::BB:CC:DD:EE:FF"
 
 
