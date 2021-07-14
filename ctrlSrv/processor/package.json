@@ -2,7 +2,7 @@
   "name": "node-rssi-processor",
   "version": "0.0.1",
   "type": "module",
-  "description": "A node based RSSI processor for MQTT navdev data",
+  "description": "A node based RSSI processor for MQTT NavDev data",
   "main": "index.js",
   "keywords": [
     "MQTT",

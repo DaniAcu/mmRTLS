@@ -6,6 +6,8 @@ import { Beacon } from '../models/beacon.js'
 import { Point } from '../models/point.js'
 import { PointResolver } from '../models/pointResolver.js'
 
+const NavDevTable = "NavDev"
+const PositionTable = "`Position`"
 class RssiController { 
     constructor(dbController) {
         this.dbController = dbController
@@ -28,7 +30,7 @@ class RssiController {
         }
 
         try {
-            let result = await this.dbController.queryPromise("SELECT * FROM navDev WHERE macAddress = ? LIMIT 1", [mac]) 
+            let result = await this.dbController.queryPromise("SELECT * FROM " + NavDevTable + " WHERE macAddress = ? LIMIT 1", [mac]) 
             if (result[0] === undefined) {
                 return 0
             } else {
@@ -44,7 +46,7 @@ class RssiController {
 
     async storeNavDev(navDev) {
         try {
-            let result = await this.dbController.queryPromise("INSERT INTO NavDev (macAddress, onboardingDate, lastConnected) VALUES (?,?,?)",
+            let result = await this.dbController.queryPromise("INSERT INTO " + NavDevTable + " (macAddress, onboardingDate, lastConnected) VALUES (?,?,?)",
                 [navDev.mac, navDev.onboardingDate, navDev.lastConnected])
             this.knownNavDevs.set(navDev.mac, result.insertId)
             appLog("Stored new NavDev with mac " + navDev.mac + " and id " + result.insertId)
@@ -60,7 +62,7 @@ class RssiController {
             return 
         }
         try {
-            let result = await this.dbController.queryPromise("INSERT INTO `Position` (x, y, time, navId) VALUES (?,?,?,?)",
+            let result = await this.dbController.queryPromise("INSERT INTO " + PositionTable + " (x, y, time, navId) VALUES (?,?,?,?)",
                 [point.x, point.y, time, navId])
             //@TODO: update NavDev with lastConnected
            
@@ -78,7 +80,7 @@ class RssiController {
         //2. Get uniqueId from navDev MAC
         let navDevId = await this.getNavDevId(navData.navDevMac)
         if (navDevId == 0) {
-            appLog("NavDev Mac " + navData.navDevMac + " is a new navdev")
+            appLog("NavDev Mac " + navData.navDevMac + " is a new NavDev")
             this.storeNavDev(new NavDev(navData.navDevMac, new Date(), new Date()))            
         } else if (navDevId > 0) {
             appLog("NavDev Mac " + navData.navDevMac + " has id " + navDevId)
@@ -103,7 +105,7 @@ class RssiController {
         //3. Process RSSI from sent list and get position
         let pointResolver = new PointResolver(validBeacons)
         let trilatPoint = pointResolver.getPosition()
-        appLog("navdev " + navData.navDevMac + " position is " + trilatPoint.toString())
+        appLog("NavDev " + navData.navDevMac + " position is " + trilatPoint.toString())
         
         //4. Store position for navId
         if (trilatPoint.isValid()) {
@@ -111,7 +113,7 @@ class RssiController {
             time = time > new Date("01/01/2021") ? time : new Date()           
             this.storePosition(navData.navDevMac, trilatPoint, time)
         } else {
-            appLog("navdev calculated position is not valid, not storing")
+            appLog("NavDev calculated position is not valid, not storing")
         }     
     }
 }

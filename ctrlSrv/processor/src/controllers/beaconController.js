@@ -26,7 +26,7 @@ class BeaconController {
 
         appLog("Getting beacons info from database")
         try {
-            let result = await this.dbController.queryPromise("SELECT * FROM beacon LIMIT ?", [maxBeacons])
+            let result = await this.dbController.queryPromise("SELECT * FROM " + beaconTable + " LIMIT ?", [maxBeacons])
             
             if (result[0] === undefined) {
                 return []

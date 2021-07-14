@@ -23,11 +23,6 @@ Configure the application by modifying appConfig.json in config folder
         "pass" : "RMVnTbQ7wF",
         "table" : "mmRTLS"
     },
-    "beacons" : [
-        { "mac": "C0:25:67:BD:F8:B1", "name": "Nexxt", "x": 5, "y": 7, "tssi": 20 },
-        { "mac": "F0:81:75:1F:F2:63", "name": "Sagemcom", "x": 9, "y": 0, "tssi": 20 },
-        { "mac": "70:56:81:CD:41:EB", "name": "Apple", "x": 0, "y": 0, "tssi": 20 }
-    ],
     "parsing" : {
         "sortByTime" : false,
         "filterByKnowBeacons" : true
@@ -80,7 +75,7 @@ POST 3:
 }
 ```
 
-2. publish to ´rssi´ topic the following test json
+2. publish to ´rssi´ topic (/topictest/macrssi_data) the following test json
 ```
 {
     "navDevMac": "AA::BB:CC:DD:EE:FF",
