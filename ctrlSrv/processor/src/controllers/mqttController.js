@@ -9,6 +9,8 @@ class MqttController {
         this.pass = pass
         this.clientId = clientId
         this.topicHandler = topicHandler
+        this.onConnectedListeners = []
+        this.mqttClient = null
     }
 
     connect() {
@@ -30,9 +32,14 @@ class MqttController {
         
         let mqttClient = mqtt.connect(mqtturl, mqttConnectionOptions)
         let topicHandler = this.topicHandler
-
+        let self = this
         mqttClient.on("connect",function() {	
-            appLog("Mqtt connected = " + mqttClient.connected)
+            if (self.onConnectedListeners.length > 0) {
+                self.onConnectedListeners.forEach(listener => {
+                    listener(mqttClient.connected)
+                });                
+            }
+
             let subscriptionOptions = {
                 qos:1
             }
@@ -61,6 +68,22 @@ class MqttController {
         })
         
         this.mqttClient = mqttClient
+    }
+
+    listenOnConnected(callback) {
+        this.onConnectedListeners.push(callback)
+    }
+
+    publish(topic, message, isJson) {
+        if (!this.mqttClient.connected) {
+            appLog("publish to " + topic + ": MQTT  is not connected" + error)
+            return -1
+        }
+        if (isJson == null || isJson == true) {
+            message = JSON.stringify(message)
+        }
+        appLog("publishing to " + topic + ", payload = " + message)
+        this.mqttClient.publish(topic, message)
     }
 
     disconnect() {

@@ -45,7 +45,42 @@ Just do npm test
 Just do npm start
 
 # Dry run
-With the initial config, publish to ´rssi´ topic the following test json
+With the initial config:
+
+1. Use the rest beacon api and post each beacon information to http://<url>:3000/beacons
+```
+POST 1:
+{
+  "mac": "C0:25:67:BD:F8:B1",
+  "name": "Nexxt",
+  "x": 0,
+  "y": 0,
+  "tssi": 20,
+  "channel": 1
+}
+
+POST 2:
+{
+  "mac": "F0:81:75:1F:F2:63",
+  "name": "Sagemcom",
+  "x": 5,
+  "y": 7,
+  "tssi": 20,
+  "channel": 1
+}
+
+POST 3:
+{
+  "mac": "70:56:81:CD:41:EB",
+  "name": "Apple",
+  "x": 9,
+  "y": 0,
+  "tssi": 20,
+  "channel": 1
+}
+```
+
+2. publish to ´rssi´ topic the following test json
 ```
 {
     "navDevMac": "AA::BB:CC:DD:EE:FF",

@@ -1,5 +1,5 @@
-import mysql          from 'mysql'
 import { appLog }     from '../helpers/logger.js'
+import { DbController } from '../controllers/dbController.js'
 import { NavDevData } from '../models/navDevData.js'
 import { NavDev } from '../models/navDev.js'
 import { Beacon } from '../models/beacon.js'
@@ -7,47 +7,18 @@ import { Point } from '../models/point.js'
 import { PointResolver } from '../models/pointResolver.js'
 
 class RssiController { 
-    constructor(ip, port, user, pass, database) {
-        let mySQLConnectionOptions = {
-            host: ip,
-            port: port,
-            user: user,
-            password: pass,
-            database: database
-        }
-
-        appLog("Connecting MySQL to " + JSON.stringify(mySQLConnectionOptions))
-        this.mysqlConn = mysql.createConnection(mySQLConnectionOptions)
-        this.mysqlConn.connect(function(err) {
-            if (err) {
-                appLog("Could not connect to MySQL DB: " + err)
-                process.exit()
-            }
-            appLog("Connected to MySQL DB")
-          })
+    constructor(dbController) {
+        this.dbController = dbController
         this.knownNavDevs = new Map()
         this.beacons = new Map()
     }
 
     setBeacons(beacons) {
-        beacons.forEach(beaconIn => {
-            let beaconOut = new Beacon(beaconIn.mac, beaconIn.name, new Point(beaconIn.x, beaconIn.y), beaconIn.tssi)
-            this.beacons.set(beaconIn.mac, beaconOut)
+        this.beacons = new Map()
+        beacons.forEach(beaconIn => {           
+            this.beacons.set(beaconIn.mac, beaconIn)
         })
         appLog("Inserted " + this.beacons.size + " beacons")
-    }
-
-
-    queryPromise(query, params) {
-        return new Promise((resolve, reject) => {
-            this.mysqlConn.query(query, params, function (error, results, fields) {
-                if (error) {
-                    return reject(error)
-                } else {
-                    return resolve(results)
-                }
-            })
-        })
     }
 
     async getNavDevId(mac) {
@@ -57,7 +28,7 @@ class RssiController {
         }
 
         try {
-            let result = await this.queryPromise("SELECT * FROM navDev WHERE macAddress = ? LIMIT 1", [mac]) 
+            let result = await this.dbController.queryPromise("SELECT * FROM navDev WHERE macAddress = ? LIMIT 1", [mac]) 
             if (result[0] === undefined) {
                 return 0
             } else {
@@ -73,7 +44,7 @@ class RssiController {
 
     async storeNavDev(navDev) {
         try {
-            let result = await this.queryPromise("INSERT INTO NavDev (macAddress, onboardingDate, lastConnected) VALUES (?,?,?)",
+            let result = await this.dbController.queryPromise("INSERT INTO NavDev (macAddress, onboardingDate, lastConnected) VALUES (?,?,?)",
                 [navDev.mac, navDev.onboardingDate, navDev.lastConnected])
             this.knownNavDevs.set(navDev.mac, result.insertId)
             appLog("Stored new NavDev with mac " + navDev.mac + " and id " + result.insertId)
@@ -89,7 +60,7 @@ class RssiController {
             return 
         }
         try {
-            let result = await this.queryPromise("INSERT INTO `Position` (x, y, time, navId) VALUES (?,?,?,?)",
+            let result = await this.dbController.queryPromise("INSERT INTO `Position` (x, y, time, navId) VALUES (?,?,?,?)",
                 [point.x, point.y, time, navId])
             //@TODO: update NavDev with lastConnected
            
