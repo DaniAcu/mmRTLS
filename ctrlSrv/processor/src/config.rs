@@ -55,7 +55,7 @@ impl Config {
             "Config.toml"
         };
 
-        let config = if let Ok(config) = Config::read(path) {
+        if let Ok(config) = Config::read(path) {
             println!("Succesfully loaded {}", path);
             if config.sqlserver.connection_type != ConnectionType::MariaDB {
                 panic!("Only connection type available for the momment MariaDB");
@@ -64,9 +64,7 @@ impl Config {
         } else {
             println!("Unable to load {}, using default config", path);
             Config::default()
-        };
-
-        config
+        }
     }
 
     pub fn read(path: &str) -> Result<Config, toml::de::Error> {
