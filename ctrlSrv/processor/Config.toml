@@ -1,0 +1,16 @@
+[sqlserver]
+connection_type = "MariaDB"
+address = "localhost"
+port = 5432
+pool_size = 15
+
+[database]
+user =  "postgres"
+passwd =  "asdf1234"
+db =  "mmRTLS"
+
+[mqtt]
+address = "localhost"
+port = 1883
+user = ""
+passwd = ""

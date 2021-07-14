@@ -4,3 +4,4 @@ navDev/build/*
 navDev/.vscode
 navDev/main/build
 navDev/sdkconfig
+target/
