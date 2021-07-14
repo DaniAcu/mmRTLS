@@ -26,7 +26,8 @@
 #include "mqttConfig.h"
 
 #include "wifiHandler.h"
-#include "cJSON.h"
+#include "messageBundler.h"
+#include "messageUnbundler.h"
 #include "utils.h"
 
 static const char *TAG = "MQTTS_CLIENT";
@@ -46,12 +47,6 @@ typedef struct{
     esp_mqtt_client_handle_t client;
 }mqttClient_t;
 
-typedef struct{
-    char *MACstr;
-    cJSON *root;
-    cJSON *array;
-}cJSON_AppMACsEntity_t;
-
 static mqttClient_t mqttClientInstance = { NULL, NULL, NULL, NULL, NULL };
 
 static void mqttClientTask( void *pvParameter );
@@ -60,9 +55,7 @@ static void mqttClientInitClient( mqttClient_t *me );
 static void mqttClientStopClient( mqttClient_t *me );
 static void mqttClientDisconnect( mqttClient_t *me );
 static void mqttClientConnect( mqttClient_t *me  );
-static void mqttClientPacketRSSICleanup( cJSON_AppMACsEntity_t* pEntity );
-static int mqttClientPacketRSSIInjectData( cJSON_AppMACsEntity_t* pEntity, rssiData_t *pData );
-static int mqttClientPacketRSSIPublish( mqttClient_t *me, cJSON_AppMACsEntity_t* pEntity );
+static void mqttClientPacketSend( char *packet, void *client );
 
 /*====================================================================================*/
 static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
@@ -77,6 +70,8 @@ static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, in
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
             xEventGroupSetBits( me->eventGroupMQTT, MQTT_CLIENT_CONNECTED );
             msg_id = esp_mqtt_client_subscribe(client, CONFIG_MQTT_TOPIC_DATA, 1);
+            ESP_LOGI(TAG, "esp_mqtt_client_subscribe, ret/msg_id=%d", msg_id);
+            msg_id = esp_mqtt_client_subscribe(client, CONFIG_MQTT_TOPIC_KNOWN_NODES, 1);
             ESP_LOGI(TAG, "esp_mqtt_client_subscribe, ret/msg_id=%d", msg_id);
             break;
         case MQTT_EVENT_DISCONNECTED:
@@ -96,8 +91,9 @@ static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, in
             break;            
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");      
-            if ( NULL != strstr( event->topic, CONFIG_MQTT_TOPIC_BEACONSLIST )) {
-                /*TODO*/
+            if ( NULL != strstr( event->topic, CONFIG_MQTT_TOPIC_KNOWN_NODES )) {
+                ESP_LOGI(TAG, "========== CONFIG_MQTT_TOPIC_KNOWN_NODES ========" );
+                messageUnbundlerRetrieveKnownNodes( event->data ); 
             }
             break;
         case MQTT_EVENT_ERROR:
@@ -113,7 +109,7 @@ static void mqttClientTask( void *pvParameter )
     mqttClient_t *me = (mqttClient_t*)pvParameter;
     rssiData_t rssiData;    
     uint8_t count = 0;  
-    cJSON_AppMACsEntity_t UplinkPacket_Scan = {NULL, NULL, NULL };  /*the root entity to serialize the JSON output*/
+    messageBundlerEntity_t UplinkPacket_Scan = MESSAGEBUNDLER_ENTITY_INITIALIZER;  /*the message bundler entity to serialize the JSON output*/
     uint8_t thisMAC[6] = {0};
     char thisMACStr[32] = { 0 };
 
@@ -125,7 +121,7 @@ static void mqttClientTask( void *pvParameter )
 
     for (;;) {
         if (xQueueReceive( me->messageQueue, &rssiData, portMAX_DELAY ) == pdPASS){
-            mqttClientPacketRSSIInjectData( &UplinkPacket_Scan, &rssiData );
+            messageBundlerInsert( &UplinkPacket_Scan, &rssiData );
             ++count;
         } else {
             printf("[mqttClientTask] Message - error\n");
@@ -141,92 +137,22 @@ static void mqttClientTask( void *pvParameter )
             mqttClientConnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_CONNECTED | MQTT_CLIENT_SUBSCRIBED, true, true, portMAX_DELAY );
             printf("[mqttClientTask] Sending data...\n");
-            mqttClientPacketRSSIPublish( me, &UplinkPacket_Scan );
-            /*
-            waiting for MQTT_CLIENT_EVENT_PUBLISHED causes this error on the mqtt client:
-            E (9184) TRANSPORT_BASE: ssl_poll_read select error 104, errno = Connection reset by peer, fd = 54
-            E (9184) MQTT_CLIENT: Poll read error: 119, aborting connection
-            Apparently, the requests are queued to the task handled by the client, therefore it does not 
-            break the normal flow. However the normal flow should wait for the event before disconnecting the client.
-            NOTE : still on research, do not remove this comment yet
-            xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_EVENT_PUBLISHED, true, true, portMAX_DELAY);
-            */
+            messageBundlerPublish( &UplinkPacket_Scan, mqttClientPacketSend, me->client );
             printf("[mqttClientTask] Stopping MQTT Client...\n");
             mqttClientDisconnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_DISCONNECTED, true, true, portMAX_DELAY );
             mqttClientStopClient( me );
             printf("[mqttClientTask] Re-enabling scan mode\n");
-            mqttClientPacketRSSICleanup( &UplinkPacket_Scan );
+            messageBundlerCleanup( &UplinkPacket_Scan );
             wifiHandlerScanMode( true ); /*re-enable the scanmode*/
         }
     }
 }
 /*====================================================================================*/
-static int mqttClientPacketRSSIPublish( mqttClient_t *me, cJSON_AppMACsEntity_t* pEntity )
+static void mqttClientPacketSend( char *packet, void *client )
 {
-    int retValue = -1;
-    char *json_string;
-    json_string = cJSON_Print( pEntity->root );
-    if( NULL != json_string ) {
-        ESP_LOGI(TAG, "esp_mqtt_client_publish, ret/msg_id=%d", esp_mqtt_client_publish( me->client, CONFIG_MQTT_TOPIC_DATA, json_string , 0, 1, 0) );
-        cJSON_free( json_string );
-        retValue = 0;
-    }
-    else{
-        ESP_LOGI(TAG, "cJSON_Print cant allocate the string");
-    }
-    return retValue;
-}
-/*====================================================================================*/
-static int mqttClientPacketRSSIInjectData( cJSON_AppMACsEntity_t* pEntity, rssiData_t *pData )
-{
-    int retValue = -1;
-    cJSON *iEntry;
-    if( NULL == pEntity->root ){
-        pEntity->root = cJSON_CreateObject();
-        pEntity->array = NULL;
-        cJSON *name = NULL;
-        
-        pEntity->array = cJSON_CreateArray();
-        name = cJSON_CreateString( pEntity->MACstr );
-         
-        if( ( NULL != name ) && ( NULL != pEntity->array ) ){
-            cJSON_AddItemToObject( pEntity->root, "navDevMac", name);
-            cJSON_AddItemToObject( pEntity->root, "Beacons", pEntity->array );
-        }
-        else{
-            printf("[mqttClientTask] {cJSON} : Cant allocate a new subentity...\n");
-        }
-        
-    }
-   
-    if( NULL != ( iEntry = cJSON_CreateObject() ) ){
-        char iMACstr[ 32 ] = { 0 };
-        utilsMAC2str( pData->mac, iMACstr, sizeof(iMACstr) );
-        
-        cJSON_AddStringToObject( iEntry, "mac",   iMACstr );
-        cJSON_AddNumberToObject( iEntry, "channel",   pData->channel );
-        cJSON_AddNumberToObject( iEntry, "rssi",	  pData->rssi);
-        cJSON_AddNumberToObject( iEntry, "timestamp", pData->timestamp);   
-        cJSON_AddItemToObject( pEntity->array, iMACstr, iEntry ); 
-
-        printf("[mqttClientTask] Message - Mac=%s, RSSI=%d, channel=%d\n", iMACstr, pData->rssi, pData->channel );
-        retValue = 0;   
-    }
-    else{
-        printf("[mqttClientTask] {cJSON} : Cant allocate a new subentity...\n");
-    }
-    return retValue;
-}
-/*====================================================================================*/
-static void mqttClientPacketRSSICleanup( cJSON_AppMACsEntity_t* pEntity )
-{
-    if( NULL != pEntity->root ){
-        cJSON_Delete( pEntity->root ); /*Delete the cJSON root entity and all subentities recursively*/
-        //cJSON_Delete( pEntity->array );
-    }
-    pEntity->root = NULL;
-    pEntity->array = NULL;
+    esp_mqtt_client_handle_t hClient = (esp_mqtt_client_handle_t)client;
+    ESP_LOGI(TAG, "esp_mqtt_client_publish, ret/msg_id=%d", esp_mqtt_client_publish( hClient, CONFIG_MQTT_TOPIC_DATA, packet , 0, 1, 0) );
 }
 /*====================================================================================*/
 esp_err_t mqttClientStart( QueueHandle_t messageQueue, EventGroupHandle_t eventGroup )
@@ -238,7 +164,7 @@ esp_err_t mqttClientStart( QueueHandle_t messageQueue, EventGroupHandle_t eventG
         me->eventGroupWifi = eventGroup;
         me->eventGroupMQTT = xEventGroupCreate();
         me->messageQueue = messageQueue;
-        if( pdPASS  == xTaskCreate(&mqttClientTask, "mqttClientTask", 4096, me, 3, &me->xTask ) ){
+        if ( pdPASS  == xTaskCreate(&mqttClientTask, "mqttClientTask", 4096, me, 3, &me->xTask ) ) {
             retValue = ESP_OK;
         }
     }
@@ -250,7 +176,7 @@ static void mqttClientInitClient( mqttClient_t *me )
     esp_mqtt_client_config_t mqtt_cfg = {
         .uri = CONFIG_MQTT_BROKER_URI,
     };
-    me->client = esp_mqtt_client_init(&mqtt_cfg);
+    me->client = esp_mqtt_client_init( &mqtt_cfg );
     esp_mqtt_client_register_event( me->client , ESP_EVENT_ANY_ID, mqttClientEventHandler, me );
 }
 /*====================================================================================*/
@@ -258,7 +184,7 @@ static void mqttClientDisconnect( mqttClient_t *me )
 {
     esp_err_t err;
     err = esp_mqtt_client_disconnect( me->client );
-    if (err) {
+    if ( err ) {
         ESP_LOGE(TAG, "esp_mqtt_client_start, %s", esp_err_to_name(err));
         return;
     }

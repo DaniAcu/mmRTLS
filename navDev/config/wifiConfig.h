@@ -10,7 +10,7 @@ extern void Wifi_PrintDebug(const char *log);
 #define WIFI_RECONNECT_TRIES        5  
 #define WIFI_RSSIDATA_QUEUE_SIZE    16
 #define WIFI_CHANNEL_MAX            14
-#define WIFI_SCAN_TIME_MS_BTW_CH    1000
+#define WIFI_SCAN_TIME_MS_BTW_CH    500
 
 // #define TARGET_ESP32               
 #define WIFI_VERBOSE                1

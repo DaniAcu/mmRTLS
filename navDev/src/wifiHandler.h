@@ -13,20 +13,20 @@ extern "C" {
 
 
 typedef struct {
-   EventGroupHandle_t eventGroup;  /* FreeRTOS event group to signal when we are connected*/
-   wifi_promiscuous_cb_t packetHandler;
-   uint8_t nChannels;
+    EventGroupHandle_t eventGroup;  /* FreeRTOS event group to signal when we are connected*/
+    wifi_promiscuous_cb_t packetHandler;
+    uint8_t nChannels;
 }wifi_handler_data_t;
 
 
 typedef enum{
-   WIFI_READY              = BIT0,
-   WIFI_DISCONNECTED       = BIT1,
-   WIFI_CONNECTING         = BIT2,
-   WIFI_CONNECTED          = BIT3,
-   WIFI_CONN_FAILED        = BIT4,
-   WIFI_SCAN_START         = BIT5,
-   WIFI_SCAN_STOP          = BIT6
+    WIFI_READY              = BIT0,
+    WIFI_DISCONNECTED       = BIT1,
+    WIFI_CONNECTING         = BIT2,
+    WIFI_CONNECTED          = BIT3,
+    WIFI_CONN_FAILED        = BIT4,
+    WIFI_SCAN_START         = BIT5,
+    WIFI_SCAN_STOP          = BIT6
 } wifi_handler_event_bits_t;
 
 

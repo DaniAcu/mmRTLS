@@ -10,7 +10,7 @@
 int32_t initializeNVSRegistry(void) {
     // Initialize NVS
     esp_err_t err = nvs_flash_init();
-     if ((ESP_ERR_NVS_NO_FREE_PAGES == err)) {
+    if ((ESP_ERR_NVS_NO_FREE_PAGES == err)) {
         // NVS partition was truncated and needs to be erased, retry nvs_flash_init
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
