@@ -18,7 +18,7 @@ function publishBeacons(mqttController, topic, beacons) {
 
 function main() {
     //Getting app configuration
-    nconf.use('file', { file: './config/appconfig.json' })
+    nconf.use('file', { file: './config/appConfig.json' })
     nconf.load()
 
     //App Name
