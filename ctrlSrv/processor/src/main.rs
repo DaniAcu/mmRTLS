@@ -1,3 +1,5 @@
+mod point;
+mod positionSolver;
 mod config;
 mod sql_pool;
 mod mqtt_cli;
