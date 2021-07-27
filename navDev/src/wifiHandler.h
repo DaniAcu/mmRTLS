@@ -91,7 +91,7 @@ void wifiHandlerAPTask( void* taskParmPtr );
 
 wifi_handler_ap_credentials_t* wifiHandlerGetAPCredentialList( void );
 int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find );
-int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, uint8_t ssid_len, int8_t ap_rssid );
+int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, int8_t ap_rssid );
 int wifiHandlerSetBestAPbyList( void );
 
 #ifdef __cplusplus

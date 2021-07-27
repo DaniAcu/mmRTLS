@@ -39,13 +39,14 @@ typedef struct {
 	unsigned char payload[];    /*network data*/
 } __attribute__((packed)) wifi_mgmt_hdr;
 
+static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst );
+
 //-- Event Handlers start --
+
 void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
 {
-    int fc, index;
+    int index;
     wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buffer;
-    wifi_mgmt_hdr *mgmt = (wifi_mgmt_hdr *)pkt->payload;
-    fc = ntohs( mgmt->fctl );
    
     if (type == 0) {
         rssiData_t rssiData = processWifiPacket(&(pkt->rx_ctrl),  pkt->payload);
@@ -54,15 +55,30 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
         }
 
         if ( ( index = wifiHandlerGetAPIndexFromListbyMAC( rssiData.mac ) ) > 0 ) { 
-            if( SCANNER_IS_PROBE_REQPACKET(fc) ) {
-                uint8_t ssid_len;
-                ssid_len = pkt->payload[ 25 ];
-                if( ssid_len > 0 ){
-                    wifiHandlerAPCredentialListInsertSSDI( index, (char*)&pkt->payload[ 25 ], ssid_len, rssiData.rssi  );
-                }
-            }             
+            char ssid[ MAX_SSID_NAME_LENGTH ]= { 0 };
+            if( NULL != wifiScannerGetSSIDFromPacket( pkt, ssid ) ){
+                wifiHandlerAPCredentialListInsertSSDI( index, ssid, rssiData.rssi  );
+            }          
         }
     }
+}
+
+static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst ){
+    char *retVal = NULL;
+    wifi_mgmt_hdr *mgmt = (wifi_mgmt_hdr *)pkt->payload;
+    int fc;
+
+    fc = ntohs( mgmt->fctl );
+    if( SCANNER_IS_PROBE_REQPACKET(fc) ) {
+        uint8_t ssid_len;
+        ssid_len = pkt->payload[ 25 ];
+        if( ( ssid_len > 0 ) && ( ssid_len < MAX_SSID_NAME_LENGTH ) ){
+            memcpy( dst, (char*)&pkt->payload[ 25 ], ssid_len );
+            dst[ ssid_len ] = '\0'; /*just to be sure*/
+            retVal = dst;
+        }
+    }
+    return retVal;
 }
 
 //Task

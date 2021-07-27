@@ -20,6 +20,7 @@ static uint8_t lastChannel = 1;
 
 static wifi_handler_ap_credentials_t apCredential_list[ MAX_ENTRIES_ON_AP_CRED_LIST ] = { false };
 
+static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 );
 /** 
  * wifi events 
  */
@@ -211,13 +212,12 @@ int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find )
     return index;
 }
 
-int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, uint8_t ssid_len, int8_t ap_rssid )
+int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, int8_t ap_rssid )
 {
     int retVal = -1;
     if( index < MAX_ENTRIES_ON_AP_CRED_LIST ){
         if( 0 == strlen(apCredential_list[index].ssid) ){ /*only the first time, when the entry is empty*/
-            memcpy( apCredential_list[ index ].ssid, ssid, ssid_len );
-            apCredential_list[ index ].ssid[ ssid_len ] = '\0'; /*just to be sure*/
+            strcpy( apCredential_list[ index ].ssid, ssid  );
         }
         apCredential_list[ index ].rssi = ap_rssid; /*always keep the last*/
         apCredential_list[ index ].valid = true;
@@ -259,11 +259,11 @@ int wifiHandlerSetBestAPbyList( void ){
     if( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0 )  ){
         strcpy( (char*)wifi_config.sta.ssid, bestSignalAp.ssid );
         strcpy( (char*)wifi_config.sta.password, bestSignalAp.pwd );
-        ESP_LOGI( TAG, "Using best signal AP: %s", bestSignalAp.ssid );
+        ESP_LOGI( TAG, "Connecting to AP [ %s ] with rssi = %d ...", bestSignalAp.ssid , bestSignalAp.rssi);
         return 0;
     }
     else{
-        ESP_LOGI( TAG, "Leaving default credentials");
+        ESP_LOGI( TAG, "Connecting to the default AP...");
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
