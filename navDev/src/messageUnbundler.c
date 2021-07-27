@@ -1,32 +1,70 @@
 #include "messageUnbundler.h"
 #include "utils.h"
 #include "packetProcessor.h"
+#include "wifiHandler.h"
 
-typedef bool (*forEachOperation_t)( char *item, size_t index, void *xData );
+typedef bool (*forEachOperation_t)( const cJSON *item, size_t index, void *xData );
 typedef void (*initOperation_t)( void *xData );
 typedef void (*endOperation_t)( void *xData );
 
+static const char *TAG = "messageUnbundler";
+
 static void messageUnbundlerArrayOperationCleanKnownList( void *nlist );
-static bool messageUnbundlerArrayOperationGetKnownNodes( char *item, size_t index, void *nlist );
+static bool messageUnbundlerArrayOperationGetKnownNodes( const cJSON *item, size_t index, void *nlist );
 static int messageUnbundlerParseArray( char *json_s, char *identifier, initOperation_t initFcm, forEachOperation_t iOperation, endOperation_t endFcn, void *xData );
 
 /*============================================================================*/
 static void messageUnbundlerArrayOperationCleanKnownList( void *nlist )
 {
     uint8_t *knownList = (uint8_t*)nlist;
-    printf( "[messageUnbundler] :] Clear the list before getting the new one\r\n" );
+    ESP_LOGI( TAG, "{Known list} Clear the list before getting the new one\r\n" );
     memset( knownList, 0, MAXKNOWN_NODES_LIST_SIZE );
 }
 /*============================================================================*/
-static bool messageUnbundlerArrayOperationGetKnownNodes( char *item, size_t index, void *nlist )
+static void messageUnbundlerArrayOperationCleanCredentials( void *nlist )
 {
-    uint8_t imac[6] = {0};
-    uint8_t *knownList = (uint8_t*)nlist;
+    ESP_LOGI( TAG, "{AP credential list} Clear the list before getting the new one\r\n" );
+    wifi_handler_ap_credentials_t *clist = (wifi_handler_ap_credentials_t*)nlist;
+    memset( clist, 0, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
+}
+/*============================================================================*/
+static bool messageUnbundlerArrayOperationGetKnownNodes( const cJSON *item, size_t index, void *nlist )
+{
+    bool retVal = true;
+
+    if( index < CONFIG_PROCESSOR_MAXKNOWN_NODES ) {
+        uint8_t imac[6] = {0};
+        uint8_t *knownList = (uint8_t*)nlist;
+
+        char *itemstr = cJSON_GetStringValue( item );
+        ESP_LOGI( TAG,  "[%d]: %s \r\n", index, itemstr );
+        utils_str2MAC( itemstr, imac );
+        memcpy( &knownList[index*6], imac, sizeof(imac) );
+        retVal = false;
+    }
+    return retVal;
+}
+/*============================================================================*/
+static bool messageUnbundlerArrayOperationGetCredentials( const cJSON *item, size_t index, void *nlist )
+{
+    bool retVal = true;
     
-    printf( "[%d]: %s \r\n", index, item );
-    utils_str2MAC( item, imac );
-    memcpy( &knownList[index*6], imac, sizeof(imac) );
-    return false;
+    if( index < MAX_ENTRIES_ON_AP_CRED_LIST ) {
+        wifi_handler_ap_credentials_t *clist = (wifi_handler_ap_credentials_t*)nlist;
+        char *strmac, *strpwd;
+        cJSON *jmac, *jpwd;
+
+        jmac = cJSON_GetObjectItemCaseSensitive( item, "mac" );
+        jpwd = cJSON_GetObjectItemCaseSensitive( item, "pwd" );
+        strmac = cJSON_GetStringValue( jmac );
+        strpwd = cJSON_GetStringValue( jpwd );
+
+        ESP_LOGI( TAG, "[%d]: %s : %s \r\n", index, strmac, strpwd );
+        utils_str2MAC( strmac, clist[ index ].macaddr );
+        strcpy( clist[ index ].pwd, strpwd );
+        retVal = false;
+    }
+    return retVal;
 }
 /*============================================================================*/
 static int messageUnbundlerParseArray( char *json_s, char *identifier, initOperation_t initFcm, forEachOperation_t iOperation, endOperation_t endFcn, void *xData )
@@ -35,7 +73,7 @@ static int messageUnbundlerParseArray( char *json_s, char *identifier, initOpera
     int status = 0;
 
     if ( NULL == incoming_json ) {
-        printf("[messageUnbundler] :] ERROR PARSING\r\n");
+        ESP_LOGE( TAG, "cJSON error parsing incoming array");
         status = -1;
     }
     else {
@@ -48,8 +86,9 @@ static int messageUnbundlerParseArray( char *json_s, char *identifier, initOpera
         }
         if ( NULL != iOperation ) {
             cJSON_ArrayForEach( item, arr){
-                char *itemstr = cJSON_GetStringValue( item );
-                iOperation( itemstr, i++, xData );
+                if ( iOperation( item, i++, xData ) ) {
+                    break;
+                }
             }
         }
         if ( NULL !=  endFcn ) {
@@ -62,12 +101,18 @@ static int messageUnbundlerParseArray( char *json_s, char *identifier, initOpera
 }
 /*============================================================================*/
 int messageUnbundlerRetrieveKnownNodes( char *incoming ){
-    messageUnbundlerParseArray( incoming, "beacons",  
-                                messageUnbundlerArrayOperationCleanKnownList, 
-                                messageUnbundlerArrayOperationGetKnownNodes, 
-                                NULL,  
-                                processGetListOfKnown() ); 
-    return 0;
+    return messageUnbundlerParseArray(  incoming, "beacons",  
+                                        messageUnbundlerArrayOperationCleanKnownList, 
+                                        messageUnbundlerArrayOperationGetKnownNodes, 
+                                        NULL,  
+                                        processGetListOfKnown() ); 
 }
 /*============================================================================*/
-
+int messageUnbundlerRetrieveCredenditals( char *incoming ){
+    return messageUnbundlerParseArray(  incoming, "ap_credentials",  
+                                        messageUnbundlerArrayOperationCleanCredentials, 
+                                        messageUnbundlerArrayOperationGetCredentials, 
+                                        NULL,  
+                                        wifiHandlerGetAPCredentialList() );     
+}
+/*============================================================================*/

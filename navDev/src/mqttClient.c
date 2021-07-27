@@ -92,12 +92,19 @@ static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, in
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");      
             if ( NULL != strstr( event->topic, CONFIG_MQTT_TOPIC_KNOWN_NODES )) {
-                ESP_LOGI(TAG, "========== CONFIG_MQTT_TOPIC_KNOWN_NODES ========" );
+                ESP_LOGI(TAG, "========== CONFIG_MQTT_TOPIC_KNOWN_NODES ==========" );
                 messageUnbundlerRetrieveKnownNodes( event->data ); 
+            }
+            else if ( NULL != strstr( event->topic, CONFIG_MQTT_TOPIC_KNOWN_NODES )) {
+                ESP_LOGI(TAG, "========== CONFIG_AP_CREDENTIAL_LIST ==========" );
+                messageUnbundlerRetrieveCredenditals( event->data );
+            }
+            else {
+                ESP_LOGE(TAG, "Unknown topic." );
             }
             break;
         case MQTT_EVENT_ERROR:
-            ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+            ESP_LOGE(TAG, "MQTT_EVENT_ERROR");
             break;             
         default:
             break;
@@ -124,25 +131,25 @@ static void mqttClientTask( void *pvParameter )
             messageBundlerInsert( &UplinkPacket_Scan, &rssiData );
             ++count;
         } else {
-            printf("[mqttClientTask] Message - error\n");
+            ESP_LOGE( TAG, "xQueueReceive message");
         }
 
         /*Test Code: every x messages we disable scan and wait connection to send messages*/
         if ( count > CONFIG_MQTT_MAXENTRIES_IN_TOPICDATA ) {
             count = 0;
-            printf("[mqttClientTask] Disabling scan mode to send data\n");
+            ESP_LOGI( TAG, "Disabling scan mode to send data");
             wifiHandlerScanMode( false );
             xEventGroupWaitBits( me->eventGroupWifi,  WIFI_CONNECTED, false, true, portMAX_DELAY);
-            printf("[mqttClientTask] Connecting MQTT Client...\n");
+            ESP_LOGI( TAG, "Connecting MQTT Client...");
             mqttClientConnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_CONNECTED | MQTT_CLIENT_SUBSCRIBED, true, true, portMAX_DELAY );
-            printf("[mqttClientTask] Sending data...\n");
+            ESP_LOGI( TAG, "Sending data...");
             messageBundlerPublish( &UplinkPacket_Scan, mqttClientPacketSend, me->client );
-            printf("[mqttClientTask] Stopping MQTT Client...\n");
+            ESP_LOGI( TAG, "Stopping MQTT Client...");
             mqttClientDisconnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_DISCONNECTED, true, true, portMAX_DELAY );
             mqttClientStopClient( me );
-            printf("[mqttClientTask] Re-enabling scan mode\n");
+            ESP_LOGI( TAG, "Re-enabling scan mode");
             messageBundlerCleanup( &UplinkPacket_Scan );
             wifiHandlerScanMode( true ); /*re-enable the scanmode*/
         }

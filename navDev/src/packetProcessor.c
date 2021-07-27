@@ -1,7 +1,12 @@
 #include "packetProcessor.h"
 #include "wifiConfig.h"
 #include "utils.h"
+#include "esp_log.h"
+
+
 #include <string.h>
+
+static const char *TAG = "packetProcessor";
 
 typedef struct {
     unsigned frame_ctrl:16;
@@ -48,28 +53,28 @@ rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *pa
         return rssiData;
     }
 
-      wifi_ieee80211_packet_t  *ipkt = (wifi_ieee80211_packet_t *) payload;
-      wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
+    wifi_ieee80211_packet_t  *ipkt = (wifi_ieee80211_packet_t *) payload;
+    wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;    
 
-      gettimeofday( &tp, NULL );
-      rssiData.rssi = crtPkt->rssi;
-      rssiData.channel = crtPkt->channel;
-      rssiData.timestamp = (((uint64_t)tp.tv_sec)*1000)+(tp.tv_usec/1000);
-      memcpy( rssiData.mac, hdr->addr2, sizeof(rssiData.mac) );
+    gettimeofday( &tp, NULL );
+    rssiData.rssi = crtPkt->rssi;
+    rssiData.channel = crtPkt->channel;
+    rssiData.timestamp = (((uint64_t)tp.tv_sec)*1000)+(tp.tv_usec/1000);
+    memcpy( rssiData.mac, hdr->addr2, sizeof(rssiData.mac) );
 
-      ismacknonw = processCheckIfKnown( rssiData.mac ); 
-      rssiData.isValid = ( KNOWN_LIST_EMPTY == ismacknonw  || ( ismacknonw >= 0 ) );
+    ismacknonw = processCheckIfKnown( rssiData.mac ); 
+    rssiData.isValid = ( KNOWN_LIST_EMPTY == ismacknonw  || ( ismacknonw >= 0 ) );
 
-      if ( ismacknonw >= 0 ) {
+    if ( ismacknonw >= 0 ) {
         knownChannels[ rssiData.channel ] = true;
-      }
-      else if ( KNOWN_LIST_EMPTY != ismacknonw ) {
+    }
+    else if ( KNOWN_LIST_EMPTY != ismacknonw ) {
         char macstr[18] = {0};
         utilsMAC2str( rssiData.mac, macstr, sizeof(macstr)  );
-        printf("[processor] : %s ignored (not on the known list)\r\n", macstr );
-      } 
+        ESP_LOGI( TAG, "%s ignored (not on the known list)\r\n", macstr );
+    } 
 
-      return rssiData;
+    return rssiData;
 }
 /*============================================================================*/
 static KnownListStatus_t processCheckIfKnown( uint8_t *mac ){

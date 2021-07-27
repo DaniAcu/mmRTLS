@@ -10,7 +10,11 @@ extern "C" {
 #include "esp_wifi.h"
 #include "esp_wifi_types.h"
 #include "esp_event.h"
+#include "esp_log.h"
+#include "freertos/event_groups.h"
 
+
+#include "wifiConfig.h"
 
 typedef struct {
     EventGroupHandle_t eventGroup;  /* FreeRTOS event group to signal when we are connected*/
@@ -29,7 +33,13 @@ typedef enum{
     WIFI_SCAN_STOP          = BIT6
 } wifi_handler_event_bits_t;
 
-
+typedef struct{
+    bool valid;
+    char ssid[ MAX_SSID_NAME_LENGTH ];
+    char pwd[ MAX_CRED_PWD_LENGTH];
+    uint8_t macaddr[6];
+    int8_t rssi;
+}wifi_handler_ap_credentials_t;
 
 /**
  * @brief
@@ -79,6 +89,10 @@ int32_t wifiHandlerGetStatusConnection(void);
 void wifiHandlerAPTask( void* taskParmPtr );
 
 
+wifi_handler_ap_credentials_t* wifiHandlerGetAPCredentialList( void );
+int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find );
+int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, uint8_t ssid_len, int8_t ap_rssid );
+int wifiHandlerSetBestAPbyList( void );
 
 #ifdef __cplusplus
 }

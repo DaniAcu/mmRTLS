@@ -2,10 +2,13 @@
 
 #include "nvsRegistry.h"
 #include "esp_system.h"
+#include "esp_log.h"
 #include "nvs_flash.h"
 #include "nvs.h"
 // Documentation:
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html
+
+static const char *TAG = "nvsRegistry";
 
 int32_t initializeNVSRegistry(void) {
     // Initialize NVS
@@ -24,7 +27,7 @@ int32_t getValueFromNVSRegistry(const char *key, void *outValue, NvsRegistryData
     nvs_handle handle;
     esp_err_t err = nvs_open("navDevData", NVS_READONLY, &handle);
     if (err != ESP_OK) {
-         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
+        ESP_LOGE( TAG, "Error (%s) opening NVS handle!", esp_err_to_name(err));
         return err;
     } 
 
