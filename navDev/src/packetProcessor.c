@@ -36,7 +36,8 @@ static int processCheckIfKnown( uint8_t *mac );
 /*============================================================================*/
 rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload) {
 
-#ifdef TARGET_ESP32 
+
+#if CONFIG_IDF_TARGET_ESP32
     int len = crtPkt->sig_len;  // ESP32
 #else 
     int len = crtPkt->sig_mode ? crtPkt->HT_length : crtPkt->legacy_length;  // ESP8266
