@@ -232,9 +232,9 @@ static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 )
     const wifi_handler_ap_credentials_t *i1 = item1;
     const wifi_handler_ap_credentials_t *i2 = item2;
     int8_t rssi1, rssi2;
-    rssi1 = ( i1->valid )? i1->rssi : SCHAR_MIN;
-    rssi2 = ( i2->valid )? i2->rssi : SCHAR_MIN;
-    return (int)( rssi2 - rssi1 );
+    rssi1 = ( i1->valid )? i1->rssi : INT8_MIN;
+    rssi2 = ( i2->valid )? i2->rssi : INT8_MIN;
+    return ( (int)rssi2 - (int)rssi1 );
 }
 
 
@@ -242,7 +242,7 @@ int wifiHandlerSetBestAPbyList( void ){
     int retVal = -1;
     wifi_handler_ap_credentials_t bestSignalAp;
     qsort( apCredential_list,  MAX_ENTRIES_ON_AP_CRED_LIST, sizeof(wifi_handler_ap_credentials_t), wifiHandlerRSSICmpFcn );
-    bestSignalAp = apCredential_list[ 0 ];
+    bestSignalAp = apCredential_list[ 0 ]; /*AP with the best signal on top*/
 
     wifi_config_t wifi_config = {
         .sta = {
