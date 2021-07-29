@@ -21,6 +21,19 @@ static uint8_t lastChannel = 1;
 static wifi_handler_ap_credentials_t apCredential_list[ MAX_ENTRIES_ON_AP_CRED_LIST ] = { false };
 
 static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 );
+
+static wifi_config_t wifi_config = {
+    .sta = {
+        .ssid = WIFI_SSID,
+        .password = WIFI_PASS,
+        .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+        .pmf_cfg = {
+           .capable = true,
+           .required = false
+        },
+    },
+};
+
 /** 
  * wifi events 
  */
@@ -61,18 +74,6 @@ static void  wifiHandlerInit(void) {
         ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifiEventhandler, NULL));  // deprecated
         ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifiEventhandler, NULL)); // deprecated
     #endif
-
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = WIFI_SSID,
-            .password = WIFI_PASS,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-            .pmf_cfg = {
-               .capable = true,
-               .required = false
-            },
-        },
-    };
 
     wifi_country_t wificountry = {
         .cc = "CN",
@@ -215,9 +216,9 @@ int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find )
 int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, int8_t ap_rssid )
 {
     int retVal = -1;
-    if( index < MAX_ENTRIES_ON_AP_CRED_LIST ){
+    if( index < MAX_ENTRIES_ON_AP_CRED_LIST ) {
         if( 0 == strlen(apCredential_list[index].ssid) ){ /*only the first time, when the entry is empty*/
-            strcpy( apCredential_list[ index ].ssid, ssid  );
+            strncpy( apCredential_list[ index ].ssid, ssid, MAX_SSID_NAME_LENGTH  );
         }
         apCredential_list[ index ].rssi = ap_rssid; /*always keep the last*/
         apCredential_list[ index ].valid = true;
@@ -232,37 +233,30 @@ static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 )
     const wifi_handler_ap_credentials_t *i1 = item1;
     const wifi_handler_ap_credentials_t *i2 = item2;
     int8_t rssi1, rssi2;
-    rssi1 = ( i1->valid )? i1->rssi : INT8_MIN;
-    rssi2 = ( i2->valid )? i2->rssi : INT8_MIN;
-    return ( (int)rssi2 - (int)rssi1 );
+
+    rssi1 = ( i1->valid )? i1->rssi : INT8_MIN; /*invalid : entry penalty*/
+    rssi2 = ( i2->valid )? i2->rssi : INT8_MIN; /*invalid : entry penalty*/
+    return ( (int)rssi2 - (int)rssi1 ); /*best rssi first*/
 }
 
 
-int wifiHandlerSetBestAPbyList( void ){
+int wifiHandlerSetBestAPbyList( void )
+{
     int retVal = -1;
     wifi_handler_ap_credentials_t bestSignalAp;
+    
     qsort( apCredential_list,  MAX_ENTRIES_ON_AP_CRED_LIST, sizeof(wifi_handler_ap_credentials_t), wifiHandlerRSSICmpFcn );
     bestSignalAp = apCredential_list[ 0 ]; /*AP with the best signal on top*/
 
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = WIFI_SSID,
-            .password = WIFI_PASS,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-            .pmf_cfg = {
-               .capable = true,
-               .required = false
-            },
-        },
-    };
-
-    if( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0 )  ){
-        strcpy( (char*)wifi_config.sta.ssid, bestSignalAp.ssid );
-        strcpy( (char*)wifi_config.sta.password, bestSignalAp.pwd );
+    if( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0 ) ) {
+        strncpy( (char*)wifi_config.sta.ssid, bestSignalAp.ssid, MAX_SSID_NAME_LENGTH );
+        strncpy( (char*)wifi_config.sta.password, bestSignalAp.pwd, MAX_CRED_PWD_LENGTH );
         ESP_LOGI( TAG, "Connecting to AP [ %s ] with rssi = %d ...", bestSignalAp.ssid , bestSignalAp.rssi);
         return 0;
     }
-    else{
+    else {
+        strncpy( (char*)wifi_config.sta.ssid, WIFI_SSID, MAX_SSID_NAME_LENGTH );
+        strncpy( (char*)wifi_config.sta.password, WIFI_PASS, MAX_CRED_PWD_LENGTH );
         ESP_LOGI( TAG, "Connecting to the default AP...");
     }
 

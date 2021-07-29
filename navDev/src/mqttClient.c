@@ -166,7 +166,7 @@ esp_err_t mqttClientStart( QueueHandle_t messageQueue, EventGroupHandle_t eventG
 {
     static mqttClient_t *me = NULL; 
     esp_err_t retValue = ESP_FAIL;
-    if( NULL == me ){
+    if( NULL == me ) {
         me = &mqttClientInstance; 
         me->eventGroupWifi = eventGroup;
         me->eventGroupMQTT = xEventGroupCreate();

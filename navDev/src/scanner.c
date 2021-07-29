@@ -63,7 +63,8 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
     }
 }
 
-static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst ){
+static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst )
+{
     char *retVal = NULL;
     wifi_mgmt_hdr *mgmt = (wifi_mgmt_hdr *)pkt->payload;
     int fc;
@@ -82,7 +83,8 @@ static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *ds
 }
 
 //Task
-void scannerTask(void *pvParameter) {
+void scannerTask(void *pvParameter) 
+{
     EventBits_t xBits;
     scannerParams *params = (scannerParams *) pvParameter;
     uint8_t channel = params->channels;
@@ -131,7 +133,8 @@ int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueH
     return ESP_OK;
 }
 
-void Wifi_PrintDebug(const char *log) {
+void Wifi_PrintDebug(const char *log) 
+{
     #if (1  == WIFI_VERBOSE )
         printf(log);
     #endif

@@ -34,8 +34,8 @@ static bool knownChannels[ WIFI_CHANNEL_MAX ] = { 0 };
 static int processCheckIfKnown( uint8_t *mac );
 
 /*============================================================================*/
-rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload) {
-
+rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload) 
+{
 
 #if CONFIG_IDF_TARGET_ESP32
     int len = crtPkt->sig_len;  // ESP32
@@ -78,7 +78,8 @@ rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *pa
     return rssiData;
 }
 /*============================================================================*/
-static KnownListStatus_t processCheckIfKnown( uint8_t *mac ){
+static KnownListStatus_t processCheckIfKnown( uint8_t *mac )
+{
     int i;
     uint8_t nullentry[6] = { 0 };
     uint8_t *iEntry;
@@ -94,7 +95,8 @@ static KnownListStatus_t processCheckIfKnown( uint8_t *mac ){
   return KNOWN_LIST_NOT_FOUND;
 }
 /*============================================================================*/
-uint8_t* processGetListOfKnown( void ){
+uint8_t* processGetListOfKnown( void )
+{
     return knownNodes;
 }
 /*============================================================================*/

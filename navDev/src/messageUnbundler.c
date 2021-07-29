@@ -61,7 +61,7 @@ static bool messageUnbundlerArrayOperationGetCredentials( const cJSON *item, siz
 
         ESP_LOGI( TAG, "[%d]: %s : %s \r\n", index, strmac, strpwd );
         utils_str2MAC( strmac, clist[ index ].macaddr );
-        strcpy( clist[ index ].pwd, strpwd );
+        strncpy( clist[ index ].pwd, strpwd, MAX_CRED_PWD_LENGTH );
         retVal = false;
     }
     return retVal;
@@ -100,7 +100,8 @@ static int messageUnbundlerParseArray( char *json_s, char *identifier, initOpera
     return status;
 }
 /*============================================================================*/
-int messageUnbundlerRetrieveKnownNodes( char *incoming ){
+int messageUnbundlerRetrieveKnownNodes( char *incoming )
+{
     return messageUnbundlerParseArray(  incoming, "beacons",  
                                         messageUnbundlerArrayOperationCleanKnownList, 
                                         messageUnbundlerArrayOperationGetKnownNodes, 
@@ -108,7 +109,8 @@ int messageUnbundlerRetrieveKnownNodes( char *incoming ){
                                         processGetListOfKnown() ); 
 }
 /*============================================================================*/
-int messageUnbundlerRetrieveCredenditals( char *incoming ){
+int messageUnbundlerRetrieveCredenditals( char *incoming )
+{
     return messageUnbundlerParseArray(  incoming, "ap_credentials",  
                                         messageUnbundlerArrayOperationCleanCredentials, 
                                         messageUnbundlerArrayOperationGetCredentials, 
