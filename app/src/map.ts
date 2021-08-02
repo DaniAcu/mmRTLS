@@ -3,7 +3,7 @@ import 'leaflet/dist/leaflet.css';
 
 const MOCK_IMAGE = "./img/indoor-map.png";
 
-export function map(node) {
+export function map(node: HTMLDivElement) {
 	const map = L.map(node, {
       crs: L.CRS.Simple
   });

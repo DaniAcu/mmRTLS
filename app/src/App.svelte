@@ -1,12 +1,25 @@
 <script lang="ts">
-	import { map } from "./map";
+	import type { Beacon } from "./interfaces/beacon.interface";
 
-	console.log();
+	import Map from './components/Map.svelte';
+	import MapMarker from './MapMarker.svelte';
+	import { fetchStore } from "./stores";
+
+	const beacons = fetchStore<Beacon[]>('http://localhost:3000/beacons', []);
 </script>
+
+<svelte:head>
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+		rel="stylesheet">
+</svelte:head>
 
 <main>
 	<h1>Map</h1>
-	<div class="map" use:map></div>
+	<Map>
+		{#each $beacons as {x, y, beaconId} (beaconId)}
+			<MapMarker {x} {y}></MapMarker>
+		{/each}
+	</Map>
 </main>
 
 <style>
@@ -31,7 +44,14 @@
 		}
 	}
 
-	.map {
+	main :global(.map) {
 		height: 32rem;
+	}
+
+	:global(.circle-icon) {
+		background-color: #0097a7;
+		color: black;
+		border-radius: 50%;
+		padding: 10px;
 	}
 </style>
