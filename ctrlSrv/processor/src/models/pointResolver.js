@@ -22,6 +22,7 @@ class PointResolver {
         let N = this.beacons.length
         appLog("Processing distancesToPositions for " + N + " measured beacons")
         let position = new Array;
+        let error = new Array;
         let timestamp = new Array;
 
         for (let i = 0; i < N; i++) {
@@ -30,9 +31,10 @@ class PointResolver {
 
                 for (let k= 0; k < N; k++) {
                     if (k == j || k == i) continue
-                    let p = this.trilat(this.beacons[i], this.beacons[j],this.beacons[k]);
+                    let [p, e] = this.trilat(this.beacons[i], this.beacons[j],this.beacons[k]);
                     if (p) {
-                        position.push(p)
+                        position.push(p);
+                        error.push(e);
                         timestamp.push( (this.beacons[i].timestamp + this.beacons[j].timestamp + this.beacons[k].timestamp) / 3 )
                     } else {
                         appLog("Invalid trilat on current measured Beacons")
@@ -48,19 +50,22 @@ class PointResolver {
         })
         this.timestamp /= timestamp.length;
         
-        // Position Average
+        // Position Average: inverse weighted average
         this.position = new Point(0.0, 0.0); 
-        position.forEach( (p, _e) => {
-            this.position.x += p.x;
-            this.position.y += p.y;
-        });
-        this.position.x /= position.length;
-        this.position.y /= position.length;   
+        let divisor = 0.0;
+        for( let i = 0 ; i < position.length; i++){
+            this.position.y += position[i].y / error[i];
+            this.position.x += position[i].x / error[i];
+            divisor += 1.0 / error[i];
+        }
+
+        this.position.x /= divisor;
+        this.position.y /= divisor;
         
         // X & Y Standar Deviation
         let sd_x = 0.0;
         let sd_y = 0.0;
-        position.forEach((p, _e) => {
+        position.forEach(p => {
             sd_x += Math.pow(p.x - this.position.x, 2.0);
             sd_y += Math.pow(p.y - this.position.y, 2.0);
         });
@@ -73,6 +78,8 @@ class PointResolver {
         appLog("sd_y: " + sd_y);
 
         this.range = Math.sqrt( sd_x*sd_x + sd_y*sd_y );
+
+
 
         return this.position
     }
@@ -138,9 +145,9 @@ class PointResolver {
         let error2 = Math.abs( C_P2 - beaconC.distance );
 
         if ( error1 < error2 ) {
-            return (P1, error1 / beaconC.distance);
+            return [P1, error1 / beaconC.distance];
         } else {
-            return (P2, error2 / beaconC.distance);
+            return [P2, error2 / beaconC.distance];
         }            
     }
 }
