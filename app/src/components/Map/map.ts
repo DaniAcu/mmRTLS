@@ -2,14 +2,19 @@ import type {
   MapOptions as LeafletMapOptions,
   LatLngBoundsExpression, 
   LatLngLiteral,
-  Marker
+  Marker,
+  IconOptions
 } from 'leaflet';
 
 import 'leaflet/dist/leaflet.css';
 
+interface MarkerOptions extends LatLngLiteral {
+  icon?: string;
+}
+
 export interface Map {
-  addMarker(latLng: LatLngLiteral): void;
-  removeMarker(latLng: LatLngLiteral): void;
+  addMarker(latLng: MarkerOptions): void;
+  removeMarker(latLng: MarkerOptions): void;
   delete(): void;
 }
 
@@ -21,9 +26,13 @@ export async function createMap(target: HTMLElement, imageOverlay: string): Prom
 	const [L, map] = await initMap({ target, imageOverlay });
 
 	return {
-    addMarker(latLng: LatLngLiteral){
+    addMarker({ icon: iconUrl, ...latLng}: MarkerOptions){
       const key = generateMarkerKey(latLng);
-      const marker = L.marker(latLng).addTo(map);
+      const iconOptions = createIcon(iconUrl);
+
+      const marker = L.marker(latLng, iconOptions && {
+        icon: L.icon(iconOptions)
+      }).addTo(map);
       
       MarkerMap.set(key, marker)
     },
@@ -42,6 +51,15 @@ export async function createMap(target: HTMLElement, imageOverlay: string): Prom
 	}
 }
 
+const createIcon: (iconUrl?: string) => IconOptions | undefined = (iconUrl?: string) => {
+  if (!iconUrl) return undefined;
+  
+  return {
+    iconUrl,
+    iconSize: [32, 32],
+    iconAnchor: [0, 16]
+  };
+}
 
 interface MapConfig extends Pick<LeafletMapOptions, 'minZoom'> {
   imageOverlay: string;

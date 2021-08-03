@@ -10,8 +10,9 @@ export enum MarkerType {
 }
 
 interface Marker {
-  id: string,
-  type: MarkerType,
+  id: string;
+  type: MarkerType;
+  icon?: string;
   lat: number;
   lng: number;
 }
@@ -28,7 +29,7 @@ const beaconsStream:  Observable<Marker[]> =
   }).pipe(
     catchError(err => {
       console.error(err);
-      return of([])
+      return of([] as Beacon[])
     }),
     map(beacons => beacons.map(fromBeaconToMarker))
   );
@@ -37,6 +38,7 @@ function fromBeaconToMarker(beacon: Beacon): Marker {
   return {
     id: `beacon-${beacon.beaconId}`,
     type: MarkerType.BEACON,
+    icon: './static/markers/antenna.png',
     lat: beacon.x,
     lng: beacon.y
   }
@@ -73,6 +75,7 @@ function generateGetNavDeviceURL(path: string) {
       {
         "relation": "positions",
         "scope": {
+          "order": "positionId DESC",
           "limit": 1
         }
       }
@@ -92,6 +95,7 @@ function fromNavDeviceToMarker(navDevice: NavDevice): Marker {
   return {
     id: `navDevice-${navDevice.navId}`,
     type: MarkerType.NAVDEV,
+    icon: './static/markers/location.png',
     lat: navDevice.positions[0].x,
     lng: navDevice.positions[0].y
   }

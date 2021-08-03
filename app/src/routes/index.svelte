@@ -3,21 +3,23 @@
   import Map from "../components/Map/Map.svelte";
   import { onMount$ } from "../utils/lifecycles"
   import { getMarkers } from "../streams/markers";
-  import { filter } from "rxjs";
+  import { startWith } from "rxjs";
 
   const isClientRender = typeof window !== "undefined";
   const markers = onMount$.pipe(
-    filter(() => isClientRender),
-    getMarkers
-  )
+    getMarkers,
+    startWith([])
+  );
 </script>
 
 <div class="container">
-  <Map>
-    {#each $markers as {lat, lng, id} (id)}
-      <Marker {lat} {lng} />
-    {/each}
-  </Map>
+  {#if isClientRender}
+    <Map>
+      {#each $markers as {lat, lng, id, icon} (id)}
+        <Marker {lat} {lng} {icon}/>
+      {/each}
+    </Map>
+  {/if}
 </div>
 
 <style>
@@ -26,6 +28,7 @@
     padding: 0;
   }
   .container {
+    padding: 0;
     height: 100vh;
     width: 100;
   }
