@@ -72,7 +72,7 @@ function testTrilaterationWithDistances() {
 
     let pointResolver = new PointResolver(validBeacons)
     let trilatPoint = pointResolver.getPosition()
-    appLog("Calculated position is " + trilatPoint.toString())
+    appLog("Calculated position is " + trilatPoint.toString() + " +/- " + pointResolver.range)
     appLog("Calculated expected (4.7, 3.2)")
 }
 
@@ -114,7 +114,7 @@ function testTrilaterationWithRSSI() {
 
     let pointResolver = new PointResolver(validBeacons)
     let trilatPoint = pointResolver.getPosition()
-    appLog("Calculated position is " + trilatPoint.toString())
+    appLog("Calculated position is " + trilatPoint.toString() + " +/- " + pointResolver.range)
     appLog("Calculated expected (4.7, 3.2)")
 }
 

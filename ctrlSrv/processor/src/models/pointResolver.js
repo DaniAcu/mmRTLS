@@ -6,6 +6,7 @@ class PointResolver {
     constructor(measuredBeacons) {
         this.beacons = measuredBeacons
         this.position = null 
+        this.range = 0
         this.timestamp = 0
     }
 
@@ -19,10 +20,9 @@ class PointResolver {
 
     distancesToPositions() {
         let N = this.beacons.length
-        let validPositions = 0
-        let position = new Point(0, 0)
         appLog("Processing distancesToPositions for " + N + " measured beacons")
-        this.timestamp = 0
+        let position = new Array;
+        let timestamp = new Array;
 
         for (let i = 0; i < N; i++) {
             for (let j= 0; j < N; j++) {
@@ -32,22 +32,49 @@ class PointResolver {
                     if (k == j || k == i) continue
                     let p = this.trilat(this.beacons[i], this.beacons[j],this.beacons[k]);
                     if (p) {
-                        position = position.add(p)
-                        //appLog("intermediate pos  " + p)
-                        this.timestamp += (this.beacons[i].timestamp + this.beacons[j].timestamp + this.beacons[k].timestamp) / 3
-                        validPositions++
+                        position.push(p)
+                        timestamp.push( (this.beacons[i].timestamp + this.beacons[j].timestamp + this.beacons[k].timestamp) / 3 )
                     } else {
                         appLog("Invalid trilat on current measured Beacons")
                     }
                 }
             }
         }
+        appLog("Made " + position.length + " valid trilaterations")
+        // Average of all time stamps.
+        this.timestamp = 0;
+        timestamp.forEach( t => {
+            this.timestamp += t;
+        })
+        this.timestamp /= timestamp.length;
+        
+        // Position Average
+        this.position = new Point(0.0, 0.0); 
+        position.forEach( (p, _e) => {
+            this.position.x += p.x;
+            this.position.y += p.y;
+        });
+        this.position.x /= position.length;
+        this.position.y /= position.length;   
+        
+        // X & Y Standar Deviation
+        let sd_x = 0.0;
+        let sd_y = 0.0;
+        position.forEach((p, _e) => {
+            sd_x += Math.pow(p.x - this.position.x, 2.0);
+            sd_y += Math.pow(p.y - this.position.y, 2.0);
+        });
+        sd_x /= position.length-1;
+        sd_y /= position.length-1;
+        sd_x = Math.sqrt(sd_x);
+        sd_y = Math.sqrt(sd_y); 
 
-        position = position.divScalar(validPositions)
-        this.timestamp /= validPositions
-        appLog("Made " + validPositions + " valid trilaterations")
+        appLog("sd_x: " + sd_x);
+        appLog("sd_y: " + sd_y);
 
-        return position
+        this.range = Math.sqrt( sd_x*sd_x + sd_y*sd_y );
+
+        return this.position
     }
 
     trilat(beaconA, beaconB, beaconC) {
@@ -111,9 +138,9 @@ class PointResolver {
         let error2 = Math.abs( C_P2 - beaconC.distance );
 
         if ( error1 < error2 ) {
-            return P1;
+            return (P1, error1 / beaconC.distance);
         } else {
-            return P2;
+            return (P2, error2 / beaconC.distance);
         }            
     }
 }
