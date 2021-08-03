@@ -23,10 +23,6 @@
 </div>
 
 <style>
-  :global(html, body) {
-    margin: 0;
-    padding: 0;
-  }
   .container {
     padding: 0;
     height: 100vh;

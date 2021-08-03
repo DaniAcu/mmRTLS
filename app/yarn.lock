@@ -177,6 +177,13 @@
     "@material/theme" "^11.0.0"
     tslib "^2.1.0"
 
+"@material/layout-grid@^11.0.0":
+  version "11.0.0"
+  resolved "https://registry.yarnpkg.com/@material/layout-grid/-/layout-grid-11.0.0.tgz#5ffec644de1ca9d36df44b4b6056b1bb47e26cef"
+  integrity sha512-MgG7vePDvzbtV/pHbBZ4DbPjs1qPxgnP36PjsBloWTrDh3yJ3L9NKNgs4EdlxEHD6LUUoCIlxVyV4oojSGUIHg==
+  dependencies:
+    tslib "^2.1.0"
+
 "@material/line-ripple@^11.0.0":
   version "11.0.0"
   resolved "https://registry.yarnpkg.com/@material/line-ripple/-/line-ripple-11.0.0.tgz#b13557e620ad6c6a64221d675d18df7390a32e2b"
@@ -397,6 +404,14 @@
     "@material/icon-button" "^11.0.0"
     "@smui/common" "^4.2.0"
     "@smui/ripple" "^4.2.0"
+
+"@smui/layout-grid@^4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@smui/layout-grid/-/layout-grid-4.2.0.tgz#8fd65a53e536a307f657307ec50fe9839a0f2e24"
+  integrity sha512-oHFcTcUv2NZr08TIOy/b0UZtO7irtWgbPQbGX7zyNCJHT3Zv/VpR13kmpXLmak9v187nAIAunMdjHfbKfpLVVg==
+  dependencies:
+    "@material/layout-grid" "^11.0.0"
+    "@smui/common" "^4.2.0"
 
 "@smui/line-ripple@^4.2.0":
   version "4.2.0"

@@ -4,7 +4,7 @@
 
 // Svelte Colors!
 @use '@material/theme/index' as theme with (
-  $primary: #ff3e00,
+  $primary: #009688,
   $secondary: #676778,
   $surface: #fff,
   $background: #fff,
@@ -17,6 +17,14 @@ html,
 body {
   background-color: theme.$surface;
   color: theme.$on-surface;
+}
+
+:root {
+  --mdc-theme-primary: #{theme.$primary};
+  --mdc-theme-secondary: #{theme.$secondary};
+  --mdc-theme-surface: #{theme.$surface};
+  --mdc-theme-background: #{theme.$background};
+  --mdc-theme-error: #{theme.$error};
 }
 
 a {
