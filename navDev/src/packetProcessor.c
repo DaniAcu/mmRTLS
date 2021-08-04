@@ -2,6 +2,7 @@
 #include "wifiConfig.h"
 #include "utils.h"
 #include "esp_log.h"
+#include "nvsRegistry.h"
 
 
 #include <string.h>
@@ -100,5 +101,40 @@ uint8_t* processGetListOfKnown( void )
     return knownNodes;
 }
 /*============================================================================*/
+int processKnownListStore( uint8_t *list )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
 
+    ESP_LOGI( TAG, "Saving Known nodes list..." );
+    #if ( CONFIG_PROCESSOR_PERSISTENT_KNOWN_NODES == 1 )
+    ret = setDataBlockRawToNvs( "knownlist" , list, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+    #endif
+    if( ESP_OK == ret ){
+        ESP_LOGI( TAG, "Known nodes list saved!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{SAVE} Failed" );
+    }
+    return ret;
+}
+/*============================================================================*/
+int processKnownListLoad( void )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
+    #if ( CONFIG_PROCESSOR_PERSISTENT_KNOWN_NODES == 1 )
+    ret = getDataBlockRawFromNvs( "knownlist", knownNodes, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+    #endif
+    if( ESP_OK == ret ){
+        uint32_t emptycheck = NVS_EMPTY_DWORD;
+        if( 0 == memcmp( knownNodes, &emptycheck, sizeof(emptycheck) ) ){
+            ESP_LOGI( TAG, "knownlist area  empty, start with an empty list" );
+            memset( knownNodes, 0x00, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+        }
+        ESP_LOGI( TAG, "Known nodes list loaded!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{LOAD} Failed" );
+    }
+    return ret;
+}
     

@@ -39,13 +39,16 @@ typedef struct {
 	unsigned char payload[];    /*network data*/
 } __attribute__((packed)) wifi_mgmt_hdr;
 
+#if ( WIFI_USE_ROAMING == 1 )
 static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst );
-
+#endif
 //-- Event Handlers start --
 
 void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
 {
+    #if ( WIFI_USE_ROAMING == 1 )
     int index;
+    #endif
     wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buffer;
    
     if (type == 0) {
@@ -54,15 +57,18 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
             xQueueSend( scannerMessageQueue, &rssiData, portMAX_DELAY );
         }
 
+        #if ( WIFI_USE_ROAMING == 1 )
         if ( ( index = wifiHandlerGetAPIndexFromListbyMAC( rssiData.mac ) ) > 0 ) { 
             char ssid[ MAX_SSID_NAME_LENGTH ]= { 0 };
             if( NULL != wifiScannerGetSSIDFromPacket( pkt, ssid ) ){
                 wifiHandlerAPCredentialListInsertSSDI( index, ssid, rssiData.rssi  );
             }          
         }
+        #endif
     }
 }
 
+#if ( WIFI_USE_ROAMING == 1 )
 static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst )
 {
     char *retVal = NULL;
@@ -81,6 +87,7 @@ static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *ds
     }
     return retVal;
 }
+#endif
 
 //Task
 void scannerTask(void *pvParameter) 
@@ -128,6 +135,7 @@ int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueH
     params.timeBetweenChannels = timeBetweenChannels;
     scannerMessageQueue = messageQueue;
 
+    processKnownListLoad();
     xTaskCreate(&scannerTask, "scannerTask", 2048, &params, 3, NULL);
 
     return ESP_OK;

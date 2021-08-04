@@ -12,6 +12,8 @@ static const char *TAG = "messageUnbundler";
 static void messageUnbundlerArrayOperationCleanKnownList( void *nlist );
 static bool messageUnbundlerArrayOperationGetKnownNodes( const cJSON *item, size_t index, void *nlist );
 static int messageUnbundlerParseArray( char *json_s, char *identifier, initOperation_t initFcm, forEachOperation_t iOperation, endOperation_t endFcn, void *xData );
+static void messageUnbundlerArrayOperationStoreCredentials( void *nlist );
+static void messageUnbundlerArrayOperationStoreKnownList( void *nlist );
 
 /*============================================================================*/
 static void messageUnbundlerArrayOperationCleanKnownList( void *nlist )
@@ -67,6 +69,16 @@ static bool messageUnbundlerArrayOperationGetCredentials( const cJSON *item, siz
     return retVal;
 }
 /*============================================================================*/
+static void messageUnbundlerArrayOperationStoreCredentials( void *nlist )
+{
+    wifiHandlerAPCredentialListStore( nlist );
+}
+/*============================================================================*/
+static void messageUnbundlerArrayOperationStoreKnownList( void *nlist )
+{
+    processKnownListStore( nlist );
+}
+/*============================================================================*/
 static int messageUnbundlerParseArray( char *json_s, char *identifier, initOperation_t initFcm, forEachOperation_t iOperation, endOperation_t endFcn, void *xData )
 {
     cJSON *incoming_json = cJSON_Parse( json_s );
@@ -105,7 +117,7 @@ int messageUnbundlerRetrieveKnownNodes( char *incoming )
     return messageUnbundlerParseArray(  incoming, "beacons",  
                                         messageUnbundlerArrayOperationCleanKnownList, 
                                         messageUnbundlerArrayOperationGetKnownNodes, 
-                                        NULL,  
+                                        messageUnbundlerArrayOperationStoreKnownList,  
                                         processGetListOfKnown() ); 
 }
 /*============================================================================*/
@@ -114,7 +126,7 @@ int messageUnbundlerRetrieveCredenditals( char *incoming )
     return messageUnbundlerParseArray(  incoming, "ap_credentials",  
                                         messageUnbundlerArrayOperationCleanCredentials, 
                                         messageUnbundlerArrayOperationGetCredentials, 
-                                        NULL,  
+                                        messageUnbundlerArrayOperationStoreCredentials,  
                                         wifiHandlerGetAPCredentialList() );     
 }
 /*============================================================================*/

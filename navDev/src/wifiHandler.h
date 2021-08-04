@@ -34,11 +34,11 @@ typedef enum{
 } wifi_handler_event_bits_t;
 
 typedef struct{
-    bool valid;
+    uint8_t macaddr[6];    
     char ssid[ MAX_SSID_NAME_LENGTH ];
     char pwd[ MAX_CRED_PWD_LENGTH];
-    uint8_t macaddr[6];
     int8_t rssi;
+    bool valid;
 }wifi_handler_ap_credentials_t;
 
 /**
@@ -93,6 +93,8 @@ wifi_handler_ap_credentials_t* wifiHandlerGetAPCredentialList( void );
 int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find );
 int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, int8_t ap_rssid );
 int wifiHandlerSetBestAPbyList( void );
+int wifiHandlerAPCredentialListStore( wifi_handler_ap_credentials_t *list );
+int wifiHandlerAPCredentialListLoad( void );
 
 #ifdef __cplusplus
 }

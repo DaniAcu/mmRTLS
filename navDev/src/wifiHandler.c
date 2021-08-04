@@ -11,6 +11,7 @@
 
 #include "wifiHandler.h"
 #include "esp_netif.h"
+#include "nvsRegistry.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -105,6 +106,8 @@ int32_t wifiHandlerStart(uint8_t nChannels, wifi_promiscuous_cb_t wifiPacketHand
         ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&snifferFilter));
     }
     
+    wifiHandlerAPCredentialListLoad();
+
     xTaskCreate( wifiHandlerAPTask, (const char *)"wifiHandlerAPTask", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY+1, NULL);
     return ESP_OK;
 }
@@ -172,7 +175,9 @@ void wifiHandlerAPTask( void* taskParmPtr ) {
             }
             esp_wifi_disconnect();
             ESP_LOGI( TAG, "Wifi Module, connecting to AP...\n");
-            wifiHandlerSetBestAPbyList();
+            #if ( WIFI_USE_ROAMING == 1 )
+                wifiHandlerSetBestAPbyList();
+            #endif
             esp_wifi_connect();
             xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONNECTED);
             xEventGroupSetBits(wifi_data.eventGroup, WIFI_CONNECTING);
@@ -248,7 +253,7 @@ int wifiHandlerSetBestAPbyList( void )
     qsort( apCredential_list,  MAX_ENTRIES_ON_AP_CRED_LIST, sizeof(wifi_handler_ap_credentials_t), wifiHandlerRSSICmpFcn );
     bestSignalAp = apCredential_list[ 0 ]; /*AP with the best signal on top*/
 
-    if( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0 ) ) {
+    if( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0u ) ) {
         strncpy( (char*)wifi_config.sta.ssid, bestSignalAp.ssid, MAX_SSID_NAME_LENGTH );
         strncpy( (char*)wifi_config.sta.password, bestSignalAp.pwd, MAX_CRED_PWD_LENGTH );
         ESP_LOGI( TAG, "Connecting to AP [ %s ] with rssi = %d ...", bestSignalAp.ssid , bestSignalAp.rssi);
@@ -263,4 +268,41 @@ int wifiHandlerSetBestAPbyList( void )
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
 
     return retVal;
+}
+
+int wifiHandlerAPCredentialListStore( wifi_handler_ap_credentials_t *list )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
+
+    ESP_LOGI( TAG, "Saving AP credential list..." );
+    #if ( WIFI_PERSISTENT_CREDENTIALS == 1 )
+    ret = setDataBlockRawToNvs( "apcredlist" , list, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
+    #endif
+    if( ESP_OK == ret ){
+        ESP_LOGI( TAG, "AP credential saved!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{SAVE} Failed" );
+    }
+    return ret;
+}
+
+int wifiHandlerAPCredentialListLoad( void )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
+    #if ( WIFI_PERSISTENT_CREDENTIALS == 1 )
+    ret = getDataBlockRawFromNvs( "apcredlist", apCredential_list, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
+    #endif
+    if( ESP_OK == ret ){
+        uint32_t emptycheck = NVS_EMPTY_DWORD;
+        if( 0 == memcmp( &apCredential_list, &emptycheck, sizeof(emptycheck) ) ){
+            ESP_LOGI( TAG, "AP credential area  empty, start with an empty list" );
+            memset( &apCredential_list, 0x00, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
+        }
+        ESP_LOGI( TAG, "AP credential loaded!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{LOAD} Failed" );
+    }
+    return ret;
 }

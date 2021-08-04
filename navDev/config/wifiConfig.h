@@ -15,6 +15,8 @@ extern void Wifi_PrintDebug(const char *log);
 #define MAX_CRED_PWD_LENGTH         ( 64 )
 #define MAX_ENTRIES_ON_AP_CRED_LIST ( 32 )
 #define WIFI_VERBOSE                ( 1 )
+#define WIFI_USE_ROAMING            ( 1 )
+#define WIFI_PERSISTENT_CREDENTIALS ( 1 )
 
 /*=====================Default AP =========================*/
 //#define WIFI_SSID                   "Paula"  // test_ pasar a flash

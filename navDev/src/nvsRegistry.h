@@ -10,6 +10,9 @@ typedef enum  {
     NvsRegistryDataTypeStr
 } NvsRegistryDataType;
 
+#define NVS_EMPTY_BYTE  ( 0xFF )
+#define NVS_EMPTY_DWORD ( 0xFFFFFFFF )
+
 int32_t initializeNVSRegistry(void);
 int32_t getValueFromNVSRegistry(const char *key, void *outValue, NvsRegistryDataType dataType,  size_t length);
 int32_t setValueToNVSRegistry(const char *key, void *inValue, NvsRegistryDataType dataType);

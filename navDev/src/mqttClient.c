@@ -97,7 +97,9 @@ static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, in
             }
             else if ( NULL != strstr( event->topic, CONFIG_MQTT_TOPIC_KNOWN_NODES )) {
                 ESP_LOGI(TAG, "========== CONFIG_AP_CREDENTIAL_LIST ==========" );
-                messageUnbundlerRetrieveCredenditals( event->data );
+                #if ( WIFI_USE_ROAMING == 1 )
+                    messageUnbundlerRetrieveCredenditals( event->data );
+                #endif
             }
             else {
                 ESP_LOGE(TAG, "Unknown topic." );
