@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Button, { Label } from '@smui/button';
-  import Textfield from '@smui/textfield';
+  import Button from "smelte/src/components/Button";
+  import TextField from "smelte/src/components/TextField";
   import { goto } from '$app/navigation';
  
   let email = "";
@@ -19,16 +19,16 @@
 
 <div class="login login-page flex">
   <header class="header center">
-    <h1 class="mdc-typography--headline4">Welcome</h1>
+    <h1>Welcome</h1>
   </header>
   <main class="main center">
     <form class="flex" action="#" on:submit={onSubmit}>
       <div class="flex text-field-group">
-        <Textfield type="email" bind:value={email} label="Email"/>
-        <Textfield type="password" bind:value={pass} label="Password"/>
+        <TextField type="email" bind:value={email} label="Email"/>
+        <TextField type="password" bind:value={pass} label="Password"/>
       </div>
       <Button type="submit" variant="raised">
-        <Label>Login</Label>
+        Login
       </Button>
     </form>
   </main>
