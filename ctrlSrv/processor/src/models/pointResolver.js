@@ -65,12 +65,12 @@ class PointResolver {
         // X & Y Standar Deviation
         let sd_x = 0.0;
         let sd_y = 0.0;
-        position.forEach(p => {
-            sd_x += Math.pow(p.x - this.position.x, 2.0);
-            sd_y += Math.pow(p.y - this.position.y, 2.0);
-        });
-        sd_x /= position.length-1;
-        sd_y /= position.length-1;
+        for (let i = 0; i < position.length; i++) {
+            sd_x += Math.pow(position[i].x - this.position.x, 2.0) / error[i] ;
+            sd_y += Math.pow(position[i].y - this.position.y, 2.0) / error[i];
+        }
+        sd_x /= (position.length - 1) * divisor;
+        sd_y /= (position.length - 1) * divisor;
         sd_x = Math.sqrt(sd_x);
         sd_y = Math.sqrt(sd_y); 
 
