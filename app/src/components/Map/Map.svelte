@@ -16,8 +16,11 @@
   MapContext.set(() => map);
 
   onMount(() => {
-      createMap(mapNode, config.imageOverlay)
-        .then(m => map = m);
+    const skipSSR = typeof window === "undefined";  
+    if(skipSSR) return;
+    
+    createMap(mapNode, config.imageOverlay)
+      .then(m => map = m);
   });
 
   onDestroy(() =>  {
