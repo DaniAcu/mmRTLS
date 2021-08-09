@@ -5,7 +5,7 @@
   import { getMarkers } from "../streams/markers";
   import { startWith } from "rxjs";
 
-  const isClientRender = typeof window !== "undefined";
+  const isClientRender = typeof window !== undefined;
   const markers = onMount$.pipe(
     getMarkers,
     startWith([])
@@ -16,7 +16,7 @@
   {#if isClientRender}
     <Map>
       {#each $markers as {lat, lng, id, icon} (id)}
-        <Marker {lat} {lng} {icon}/>
+        <Marker x={lat} y={lng} {id} {icon}/>
       {/each}
     </Map>
   {/if}

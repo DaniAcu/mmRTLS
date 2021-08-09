@@ -3,27 +3,27 @@
   import { onDestroy, onMount } from "svelte";
 
   import MapContext from "./map-context";
-  import { createMap } from './map';
-  import type { Map } from './map';
+  import { CartesianMap } from "../../models/cartesian-map.model";
   
   export const config = {
     imageOverlay: "./static/indoor-map.png"
   };
 
   let mapNode: HTMLDivElement;
-  let map: Map;
+  let map: CartesianMap<any>;
 
   MapContext.set(() => map);
 
-  onMount(() => {
-      createMap(mapNode, config.imageOverlay)
-        .then(m => map = m);
+  onMount(async () => {
+      const leaflet = await import('leaflet');
+      map = new CartesianMap(leaflet, mapNode);
+      map.updateBackgroundImage(config.imageOverlay, true);
   });
 
   onDestroy(() =>  {
     if(!map) return;
 
-    map.delete()
+    map.destroy()
   });
 
 </script>

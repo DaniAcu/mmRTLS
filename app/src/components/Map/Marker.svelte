@@ -1,15 +1,29 @@
 <script lang="ts">
+    import type { ICartesianMapMarker } from "src/interfaces/position.interface";
+
     import { onDestroy, onMount } from "svelte";
     import MapContext from "./map-context";
 
-    export let lat: number;
-    export let lng: number;
-    export let icon: string | undefined;
+    export let {
+        x,
+        y,
+        id,
+        name,
+        icon,
+        type
+    }: ICartesianMapMarker = {
+        x: NaN,
+        y: NaN,
+        name: '',
+        id: -1,
+        type: -1,
+        icon: undefined
+    };
 
 
     const map = MapContext.get();
 
-    onMount(() => map.addMarker({ lat, lng, icon }));
+    onMount(() => map.addMarker({ x, y, id, name, icon, type }));
 
-    onDestroy(() => map.removeMarker({ lat, lng, icon }));
+    onDestroy(() => map.removeMarker({ x, y, id, name, icon, type }));
 </script>
