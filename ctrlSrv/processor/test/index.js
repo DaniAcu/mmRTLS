@@ -76,6 +76,27 @@ function testTrilaterationWithDistances() {
     appLog("Calculated expected (4.7, 3.2)")
 }
 
+function testTrilaterationWithDistancesList(beacons, expected) {
+    appLog("Test trilateration with list")
+    appLog("Beacons: " + JSON.stringify(beacons))
+    let validBeacons = []
+
+    beacons.forEach(beacon => {
+        let mBeacon = new MeasuredBeacon()
+        mBeacon.point = new Point(beacon.x, beacon.y)
+        mBeacon.distance = beacon.distance
+        validBeacons.push(mBeacon)
+        appLog("rssi's: " + getdBm(getRx(.1, mBeacon.distance)))
+    });
+
+    appLog("Beacon data " + JSON.stringify(validBeacons))
+
+    let pointResolver = new PointResolver(validBeacons)
+    let trilatPoint = pointResolver.getPosition()
+    appLog("Calculated position is " + trilatPoint.toString() + " +/- " + pointResolver.range)
+    appLog("Calculated expected " +JSON.stringify(expected))
+}
+
 function testTrilaterationWithRSSI() {
     appLog("Test trilateration, all tssi 20dBM")
     appLog("\n           B2(5,7)\n" +
@@ -123,6 +144,15 @@ function main() {
     //TODO: Use Jest to test
     testDistance()
     testTrilaterationWithDistances()
+    testTrilaterationWithDistancesList(
+        [
+            {x:4.1,   y:3.4,   distance:7.5 },
+            {x:6.53,  y:12.65, distance:6.34 },
+            {x:16.68, y:10.25, distance:6.95 },
+            {x:16.3,  y:1.68,  distance:8.43 },
+        ],
+        { x:10.3, y: 7.57}
+    )
     testTrilaterationWithRSSI()
 }
 

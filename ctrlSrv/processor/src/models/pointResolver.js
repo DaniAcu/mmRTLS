@@ -2,6 +2,13 @@ import { MeasuredBeacon } from './measuredBeacon.js'
 import { Point } from '../models/point.js'
 import { appLog } from '../helpers/logger.js'
 
+class PointWError {
+    constructor(point, error) {
+        this.point = point
+        this.error = error
+    }  
+}
+
 class PointResolver {
     constructor(measuredBeacons) {
         this.beacons = measuredBeacons
@@ -9,6 +16,8 @@ class PointResolver {
         this.range = 0
         this.timestamp = 0
     }
+
+
 
     getPosition() {
         if (!this.position) {
@@ -31,10 +40,10 @@ class PointResolver {
 
                 for (let k= 0; k < N; k++) {
                     if (k == j || k == i) continue
-                    let [p, e] = this.trilat(this.beacons[i], this.beacons[j],this.beacons[k]);
-                    if (p) {
-                        position.push(p);
-                        error.push(e);
+                    let pointWError = this.trilat(this.beacons[i], this.beacons[j],this.beacons[k]);
+                    if (pointWError) {
+                        position.push(pointWError.point);
+                        error.push(pointWError.error);
                         timestamp.push( (this.beacons[i].timestamp + this.beacons[j].timestamp + this.beacons[k].timestamp) / 3 )
                     } else {
                         appLog("Invalid trilat on current measured Beacons")
@@ -145,9 +154,9 @@ class PointResolver {
         let error2 = Math.abs( C_P2 - beaconC.distance );
 
         if ( error1 < error2 ) {
-            return [P1, error1 / beaconC.distance];
+            return new PointWError(P1, error1 / beaconC.distance);
         } else {
-            return [P2, error2 / beaconC.distance];
+            return new PointWError(P2, error2 / beaconC.distance);
         }            
     }
 }
