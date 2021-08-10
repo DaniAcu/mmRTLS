@@ -1,7 +1,13 @@
 #include "packetProcessor.h"
 #include "wifiConfig.h"
 #include "utils.h"
+#include "esp_log.h"
+#include "nvsRegistry.h"
+
+
 #include <string.h>
+
+static const char *TAG = "packetProcessor";
 
 typedef struct {
     unsigned frame_ctrl:16;
@@ -29,9 +35,10 @@ static bool knownChannels[ WIFI_CHANNEL_MAX ] = { 0 };
 static int processCheckIfKnown( uint8_t *mac );
 
 /*============================================================================*/
-rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload) {
+rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload) 
+{
 
-#ifdef TARGET_ESP32 
+#if CONFIG_IDF_TARGET_ESP32
     int len = crtPkt->sig_len;  // ESP32
 #else 
     int len = crtPkt->sig_mode ? crtPkt->HT_length : crtPkt->legacy_length;  // ESP8266
@@ -48,31 +55,32 @@ rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *pa
         return rssiData;
     }
 
-      wifi_ieee80211_packet_t  *ipkt = (wifi_ieee80211_packet_t *) payload;
-      wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
+    wifi_ieee80211_packet_t  *ipkt = (wifi_ieee80211_packet_t *) payload;
+    wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;    
 
-      gettimeofday( &tp, NULL );
-      rssiData.rssi = crtPkt->rssi;
-      rssiData.channel = crtPkt->channel;
-      rssiData.timestamp = (((uint64_t)tp.tv_sec)*1000)+(tp.tv_usec/1000);
-      memcpy( rssiData.mac, hdr->addr2, sizeof(rssiData.mac) );
+    gettimeofday( &tp, NULL );
+    rssiData.rssi = crtPkt->rssi;
+    rssiData.channel = crtPkt->channel;
+    rssiData.timestamp = (((uint64_t)tp.tv_sec)*1000)+(tp.tv_usec/1000);
+    memcpy( rssiData.mac, hdr->addr2, sizeof(rssiData.mac) );
 
-      ismacknonw = processCheckIfKnown( rssiData.mac ); 
-      rssiData.isValid = ( KNOWN_LIST_EMPTY == ismacknonw  || ( ismacknonw >= 0 ) );
+    ismacknonw = processCheckIfKnown( rssiData.mac ); 
+    rssiData.isValid = ( KNOWN_LIST_EMPTY == ismacknonw  || ( ismacknonw >= 0 ) );
 
-      if ( ismacknonw >= 0 ) {
+    if ( ismacknonw >= 0 ) {
         knownChannels[ rssiData.channel ] = true;
-      }
-      else if ( KNOWN_LIST_EMPTY != ismacknonw ) {
+    }
+    else if ( KNOWN_LIST_EMPTY != ismacknonw ) {
         char macstr[18] = {0};
         utilsMAC2str( rssiData.mac, macstr, sizeof(macstr)  );
-        printf("[processor] : %s ignored (not on the known list)\r\n", macstr );
-      } 
+        ESP_LOGI( TAG, "%s ignored (not on the known list)\r\n", macstr );
+    } 
 
-      return rssiData;
+    return rssiData;
 }
 /*============================================================================*/
-static KnownListStatus_t processCheckIfKnown( uint8_t *mac ){
+static KnownListStatus_t processCheckIfKnown( uint8_t *mac )
+{
     int i;
     uint8_t nullentry[6] = { 0 };
     uint8_t *iEntry;
@@ -88,9 +96,45 @@ static KnownListStatus_t processCheckIfKnown( uint8_t *mac ){
   return KNOWN_LIST_NOT_FOUND;
 }
 /*============================================================================*/
-uint8_t* processGetListOfKnown( void ){
+uint8_t* processGetListOfKnown( void )
+{
     return knownNodes;
 }
 /*============================================================================*/
+int processKnownListStore( uint8_t *list )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
 
+    ESP_LOGI( TAG, "Saving Known nodes list..." );
+    #if ( CONFIG_PROCESSOR_PERSISTENT_KNOWN_NODES == 1 )
+    ret = setDataBlockRawToNvs( "knownlist" , list, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+    #endif
+    if( ESP_OK == ret ){
+        ESP_LOGI( TAG, "Known nodes list saved!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{SAVE} Failed" );
+    }
+    return ret;
+}
+/*============================================================================*/
+int processKnownListLoad( void )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
+    #if ( CONFIG_PROCESSOR_PERSISTENT_KNOWN_NODES == 1 )
+    ret = getDataBlockRawFromNvs( "knownlist", knownNodes, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+    #endif
+    if( ESP_OK == ret ){
+        uint32_t emptycheck = NVS_EMPTY_DWORD;
+        if( 0 == memcmp( knownNodes, &emptycheck, sizeof(emptycheck) ) ){
+            ESP_LOGI( TAG, "knownlist area  empty, start with an empty list" );
+            memset( knownNodes, 0x00, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+        }
+        ESP_LOGI( TAG, "Known nodes list loaded!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{LOAD} Failed" );
+    }
+    return ret;
+}
     

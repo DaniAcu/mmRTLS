@@ -1,5 +1,3 @@
-#include "wifiConfig.h"
-
 #include "stdint.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,17 +11,37 @@
 
 #include "wifiHandler.h"
 #include "esp_netif.h"
+#include "nvsRegistry.h"
+#include <string.h>
+#include <stdlib.h>
 
-static const char *TAG = "wifi station";
+static const char *TAG = "wifiHandler";
 static wifi_handler_data_t wifi_data;
 static uint8_t lastChannel = 1;
+
+static wifi_handler_ap_credentials_t apCredential_list[ MAX_ENTRIES_ON_AP_CRED_LIST ] = { false };
+
+static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 );
+
+static wifi_config_t wifi_config = {
+    .sta = {
+        .ssid = WIFI_SSID,
+        .password = WIFI_PASS,
+        .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+        .pmf_cfg = {
+           .capable = true,
+           .required = false
+        },
+    },
+};
+
 /** 
  * wifi events 
  */
 static void wifiEventhandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT) {
         if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-            ESP_LOGI(TAG, "[wifiEventhandler] WIFI_EVENT_STA_DISCONNECTED");
+            ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED");
             xEventGroupSetBits(  wifi_data.eventGroup, WIFI_DISCONNECTED|WIFI_SCAN_STOP);
             xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONNECTED|WIFI_CONNECTING);
             wifihandlerSetChannel(wifiHandlerGetSavedChannel());
@@ -33,7 +51,7 @@ static void wifiEventhandler(void* arg, esp_event_base_t event_base, int32_t eve
     } else if (event_base == IP_EVENT) {
         if (event_id == IP_EVENT_STA_GOT_IP) {
             ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-            ESP_LOGI(TAG, "[wifiEventhandler] got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+            ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
             xEventGroupSetBits(wifi_data.eventGroup, WIFI_CONNECTED);
             xEventGroupClearBits(wifi_data.eventGroup, WIFI_DISCONNECTED|WIFI_CONNECTING);
         }
@@ -58,18 +76,6 @@ static void  wifiHandlerInit(void) {
         ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifiEventhandler, NULL)); // deprecated
     #endif
 
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = WIFI_SSID,
-            .password = WIFI_PASS,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-            .pmf_cfg = {
-               .capable = true,
-               .required = false
-            },
-        },
-    };
-
     wifi_country_t wificountry = {
         .cc = "CN",
         .schan = 1,
@@ -87,11 +93,12 @@ static void  wifiHandlerInit(void) {
  *  START CONFIG
  */
 int32_t wifiHandlerStart(uint8_t nChannels, wifi_promiscuous_cb_t wifiPacketHandler) {
+    memset( apCredential_list, 0, sizeof(apCredential_list) ); 
     wifi_data.nChannels = nChannels;
     wifi_data.packetHandler = wifiPacketHandler;
     wifiHandlerInit();
     
-    printf("Wifi Module Started, configuring promiscuous mode\n");
+    ESP_LOGI( TAG, "Wifi Module Started, configuring promiscuous mode");
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(wifi_data.packetHandler));
     wifi_promiscuous_filter_t snifferFilter = {0};
     snifferFilter.filter_mask = WIFI_PROMIS_FILTER_MASK_DATA | WIFI_PROMIS_FILTER_MASK_MGMT;
@@ -99,6 +106,8 @@ int32_t wifiHandlerStart(uint8_t nChannels, wifi_promiscuous_cb_t wifiPacketHand
         ESP_ERROR_CHECK(esp_wifi_set_promiscuous_filter(&snifferFilter));
     }
     
+    wifiHandlerAPCredentialListLoad();
+
     xTaskCreate( wifiHandlerAPTask, (const char *)"wifiHandlerAPTask", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY+1, NULL);
     return ESP_OK;
 }
@@ -149,12 +158,12 @@ int32_t wifiHandler_getStatusConnection(void)
 void wifiHandlerAPTask( void* taskParmPtr ) {
     uint8_t retryConCnt = 0;
     EventBits_t xBits;
-    printf("[wifiHandlerAPTask] Started, Waiting wifi module to be ready\n");
+    ESP_LOGI( TAG, "Started, Waiting wifi module to be ready...");
     xBits = xEventGroupWaitBits(wifi_data.eventGroup, WIFI_READY, false, true, portMAX_DELAY);
     
     xEventGroupSetBits(wifi_data.eventGroup, WIFI_DISCONNECTED);
     
-    printf("[wifiHandlerAPTask] Ready, Waiting connection mode\n");
+    ESP_LOGI( TAG, "Ready, Waiting connection mode...");
     for (;;) {
         xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_DISCONNECTED | WIFI_CONNECTED | WIFI_SCAN_START | WIFI_SCAN_STOP, false, false, portMAX_DELAY);
        
@@ -162,10 +171,13 @@ void wifiHandlerAPTask( void* taskParmPtr ) {
             if (++retryConCnt > WIFI_RECONNECT_TRIES) {
                 retryConCnt = 0;
                 xEventGroupSetBits(wifi_data.eventGroup, WIFI_CONN_FAILED);
-                printf("[wifiHandlerAPTask] Wifi Connection Failed\n");
+                ESP_LOGE( TAG, "Wifi Connection Failed");
             }
             esp_wifi_disconnect();
-            printf("[wifiHandlerAPTask] Wifi Module, connecting to AP\n");
+            ESP_LOGI( TAG, "Wifi Module, connecting to AP...\n");
+            #if ( WIFI_USE_ROAMING == 1 )
+                wifiHandlerSetBestAPbyList();
+            #endif
             esp_wifi_connect();
             xEventGroupClearBits(wifi_data.eventGroup, WIFI_CONNECTED);
             xEventGroupSetBits(wifi_data.eventGroup, WIFI_CONNECTING);
@@ -178,4 +190,119 @@ void wifiHandlerAPTask( void* taskParmPtr ) {
 
         vTaskDelay(1000 / portTICK_RATE_MS);
     }
+}
+
+wifi_handler_ap_credentials_t* wifiHandlerGetAPCredentialList( void )
+{
+    return apCredential_list;
+}
+
+int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find )
+{
+    size_t i;
+    int index = -1;
+    uint8_t nullentry[6] = { 0 };
+    uint8_t *imac;
+    
+    for( i = 0 ; i < MAX_ENTRIES_ON_AP_CRED_LIST; i++ ){
+        imac = apCredential_list[ i ].macaddr;
+        if ( 0 == memcmp( imac, nullentry, 6 ) ) { 
+            index = -1; /*end of the list reached*/
+            break;
+        }
+        if ( 0 == memcmp( imac, mac2find, 6 ) ) { 
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
+
+int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, int8_t ap_rssid )
+{
+    int retVal = -1;
+    if( index < MAX_ENTRIES_ON_AP_CRED_LIST ) {
+        if( 0 == strlen(apCredential_list[index].ssid) ){ /*only the first time, when the entry is empty*/
+            strncpy( apCredential_list[ index ].ssid, ssid, MAX_SSID_NAME_LENGTH  );
+        }
+        apCredential_list[ index ].rssi = ap_rssid; /*always keep the last*/
+        apCredential_list[ index ].valid = true;
+        retVal = 0;
+    }
+    return retVal;
+}
+
+
+static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 )
+{
+    const wifi_handler_ap_credentials_t *i1 = item1;
+    const wifi_handler_ap_credentials_t *i2 = item2;
+    int8_t rssi1, rssi2;
+
+    rssi1 = ( i1->valid )? i1->rssi : INT8_MIN; /*invalid : entry penalty*/
+    rssi2 = ( i2->valid )? i2->rssi : INT8_MIN; /*invalid : entry penalty*/
+    return ( (int)rssi2 - (int)rssi1 ); /*best rssi first*/
+}
+
+
+int wifiHandlerSetBestAPbyList( void )
+{
+    int retVal = -1;
+    wifi_handler_ap_credentials_t bestSignalAp;
+    
+    qsort( apCredential_list,  MAX_ENTRIES_ON_AP_CRED_LIST, sizeof(wifi_handler_ap_credentials_t), wifiHandlerRSSICmpFcn );
+    bestSignalAp = apCredential_list[ 0 ]; /*AP with the best signal on top*/
+
+    if( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0u ) ) {
+        strncpy( (char*)wifi_config.sta.ssid, bestSignalAp.ssid, MAX_SSID_NAME_LENGTH );
+        strncpy( (char*)wifi_config.sta.password, bestSignalAp.pwd, MAX_CRED_PWD_LENGTH );
+        ESP_LOGI( TAG, "Connecting to AP [ %s ] with rssi = %d ...", bestSignalAp.ssid , bestSignalAp.rssi);
+        return 0;
+    }
+    else {
+        strncpy( (char*)wifi_config.sta.ssid, WIFI_SSID, MAX_SSID_NAME_LENGTH );
+        strncpy( (char*)wifi_config.sta.password, WIFI_PASS, MAX_CRED_PWD_LENGTH );
+        ESP_LOGI( TAG, "Connecting to the default AP...");
+    }
+
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+
+    return retVal;
+}
+
+int wifiHandlerAPCredentialListStore( wifi_handler_ap_credentials_t *list )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
+
+    ESP_LOGI( TAG, "Saving AP credential list..." );
+    #if ( WIFI_PERSISTENT_CREDENTIALS == 1 )
+    ret = setDataBlockRawToNvs( "apcredlist" , list, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
+    #endif
+    if( ESP_OK == ret ){
+        ESP_LOGI( TAG, "AP credential saved!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{SAVE} Failed" );
+    }
+    return ret;
+}
+
+int wifiHandlerAPCredentialListLoad( void )
+{
+    int32_t ret = ESP_ERR_NOT_FOUND;
+    #if ( WIFI_PERSISTENT_CREDENTIALS == 1 )
+    ret = getDataBlockRawFromNvs( "apcredlist", apCredential_list, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
+    #endif
+    if( ESP_OK == ret ){
+        uint32_t emptycheck = NVS_EMPTY_DWORD;
+        if( 0 == memcmp( &apCredential_list, &emptycheck, sizeof(emptycheck) ) ){
+            ESP_LOGI( TAG, "AP credential area  empty, start with an empty list" );
+            memset( &apCredential_list, 0x00, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
+        }
+        ESP_LOGI( TAG, "AP credential loaded!" );
+    }
+    else {
+        ESP_LOGE( TAG, "{LOAD} Failed" );
+    }
+    return ret;
 }

@@ -1,6 +1,8 @@
 #include "messageBundler.h"
+#include "esp_log.h"
 #include "utils.h"
 
+static const char *TAG = "messageBundler";
 
 /*============================================================================*/
 int messageBundlerInsert( messageBundlerEntity_t* pEntity, rssiData_t *pData )
@@ -20,7 +22,7 @@ int messageBundlerInsert( messageBundlerEntity_t* pEntity, rssiData_t *pData )
             cJSON_AddItemToObject( pEntity->root, "Beacons", pEntity->array );
         }
         else {
-            printf("[messageBundler] : {cJSON} : Cant allocate a new subentity...\r\n");
+            ESP_LOGE( TAG, "{cJSON} : Cant allocate a new subentity...");
         }
     }
    
@@ -34,11 +36,11 @@ int messageBundlerInsert( messageBundlerEntity_t* pEntity, rssiData_t *pData )
         cJSON_AddNumberToObject( iEntry, "timestamp", pData->timestamp);   
         cJSON_AddItemToObject( pEntity->array, iMACstr, iEntry ); 
 
-        printf("[messageBundler] : Message - Mac=%s, RSSI=%d, channel=%d\n", iMACstr, pData->rssi, pData->channel );
+        ESP_LOGI( TAG, "Message - Mac=%s, RSSI=%d, channel=%d", iMACstr, pData->rssi, pData->channel );
         retValue = 0;   
     }
     else {
-        printf("[messageBundler] : {cJSON} : Cant allocate a new subentity...\r\n");
+        ESP_LOGE( TAG, "{cJSON} : Cant allocate a new subentity...");
     }
     return retValue;
 }
@@ -64,7 +66,7 @@ int messageBundlerPublish( messageBundlerEntity_t* pEntity, messageBundlerPublis
         retValue = 0;
     }
     else {
-        printf("[messageBundler] : cJSON_Print cant allocate the string\r\n");
+        ESP_LOGE( TAG, "cJSON_Print cant allocate the string");
     }
     return retValue;
 }

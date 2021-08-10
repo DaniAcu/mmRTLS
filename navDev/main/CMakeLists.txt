@@ -2,6 +2,3 @@ idf_component_register(SRCS "nav_dev_main.c" ../src/scanner.c ../src/systemInfo.
                                             ../src/mqttClient.c ../src/wifiHandler.c ../src/sntpUpdate.c ../src/utils.c
                                             ../src/messageBundler.c ../src/messageUnbundler.c
 INCLUDE_DIRS "../src" ../config )
-
-# Only enable to test in ESP32 : this two lines will be removed later
-#target_compile_definitions(${COMPONENT_TARGET} PRIVATE "-DTARGET_ESP32")

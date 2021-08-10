@@ -22,7 +22,8 @@ static void sntpUpdateTask( void *pvParameter );
 
 
 /*====================================================================================*/
-static void sntpUpdateTimeSyncNotificationCB(struct timeval *tv){
+static void sntpUpdateTimeSyncNotificationCB(struct timeval *tv)
+{
     ESP_LOGI(TAG, "Notification of a time synchronization event");
 }
 /*====================================================================================*/
@@ -62,7 +63,7 @@ static void sntpUpdateTask( void *pvParameter )
 
     sntpUpdateRequestSync(); /*request for the first time*/
     ESP_LOGI(TAG, "Starting the NTP time sync service.");
-    for (;;){
+    for (;;) {
         xTaskNotifyWait( 0x00, ULONG_MAX, NULL, portMAX_DELAY ); 
         ESP_LOGI(TAG, "NTP Syncronization requested. Waiting for connectivity...");
         xEventGroupWaitBits( eventGroup,  WIFI_CONNECTED , false, true, portMAX_DELAY);
