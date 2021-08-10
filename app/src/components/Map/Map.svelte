@@ -1,29 +1,28 @@
 
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-
+  import type { IIndoorMap } from '../../interfaces/indoor-map.interface';
+  import type { IndoorMap } from "./indoor-map.model";
+  import { createMap } from "./map";
   import MapContext from "./map-context";
-  import { CartesianMap } from "../../models/cartesian-map.model";
   
   export const config = {
     imageOverlay: "./static/indoor-map.png"
   };
 
   let mapNode: HTMLDivElement;
-  let map: CartesianMap<any>;
+  let map: IIndoorMap<any>;
 
   MapContext.set(() => map);
 
   onMount(async () => {
-      const leaflet = await import('leaflet');
-      map = new CartesianMap(leaflet, mapNode);
-      map.updateBackgroundImage(config.imageOverlay, true);
+      map = await createMap(mapNode, config.imageOverlay);
   });
 
   onDestroy(() =>  {
     if(!map) return;
 
-    map.destroy()
+    (map as IndoorMap<any>).destroy();
   });
 
 </script>

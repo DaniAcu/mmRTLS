@@ -1,6 +1,6 @@
 import { fromEvent, take, takeUntil } from "rxjs";
-import type { ICartesianMap } from "src/interfaces/cartesian-map.interface";
-import type { ICartesianMapMarker, ICartesianPosition } from "src/interfaces/position.interface";
+import type { IIndoorMap } from "src/interfaces/indoor-map.interface";
+import type { IIndoorMapMarker, IIndoorPosition } from "src/interfaces/position.interface";
 import type * as Leaflet from 'leaflet';
 import type { MarkerIconOptions, MarkerIconSizeOptions } from "src/interfaces/marker-icon.interface";
 
@@ -9,7 +9,7 @@ const generateIcon = (leaflet: typeof Leaflet, {iconUrl, size, origin}: MarkerIc
     iconSize: [size, size],
     iconAnchor: origin
 })
-export class CartesianMap<T extends ICartesianMapMarker> implements ICartesianMap<T> {
+export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
 
     private readonly leafletMap: Leaflet.Map;
     private readonly markersMap: Map<T['id'], Leaflet.Marker> = new Map();
@@ -17,6 +17,7 @@ export class CartesianMap<T extends ICartesianMapMarker> implements ICartesianMa
     constructor(
         private readonly leaflet: typeof Leaflet,
         nativeElement: HTMLElement,
+        backgroundImage?: string,
         minZoom = -1,
         private defaultIconConfig: MarkerIconSizeOptions = {
             origin: [0, 16],
@@ -30,6 +31,10 @@ export class CartesianMap<T extends ICartesianMapMarker> implements ICartesianMa
             zoom: 0,
             minZoom
         });
+
+        if (backgroundImage) {
+            this.updateBackgroundImage(backgroundImage, true);
+        }
     }
 
     public updateIconSize(iconSize: number, origin: [number, number] = [iconSize / 2, iconSize / 2]): void {
@@ -53,7 +58,7 @@ export class CartesianMap<T extends ICartesianMapMarker> implements ICartesianMa
         this.leafletMap.addLayer(newMarker);
     }
 
-    public removeMarker(markerOrMarkerId: T['id'] | ICartesianMapMarker): void {
+    public removeMarker(markerOrMarkerId: T['id'] | IIndoorMapMarker): void {
         const markerId = typeof markerOrMarkerId === 'object' ? markerOrMarkerId.id : markerOrMarkerId;
         const marker = this.markersMap.get(markerId);
         if (marker) {
@@ -62,7 +67,7 @@ export class CartesianMap<T extends ICartesianMapMarker> implements ICartesianMa
         }
     }
 
-    public setBounds(minOrMaxPosCoordinates: ICartesianPosition, maxPosCoordinates?: ICartesianPosition): void {
+    public setBounds(minOrMaxPosCoordinates: IIndoorPosition, maxPosCoordinates?: IIndoorPosition): void {
         let minPos: Leaflet.LatLngTuple;
         let maxPos: Leaflet.LatLngTuple;
         if (maxPosCoordinates) {
