@@ -7,7 +7,6 @@ export interface IIndoorMapMarkersInteractions<T extends IIndoorMapMarker> {
 }
 
 export interface IIndoorMapActions {
-    updateBackgroundImage(imageUrl: string, updateBounds: boolean): void;
     setBounds(maxPosition: IIndoorPosition): void;
     setBounds(minPosition: IIndoorPosition, maxPosition: IIndoorPosition): void;
 }

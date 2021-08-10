@@ -6,9 +6,7 @@ import { IndoorMap } from './indoor-map.model';
 
 
 export async function createMap(target: HTMLElement, imageOverlay: string): Promise<IIndoorMap<never>> {
-	const leaflet = await initMap({ target, imageOverlay });
-
-	return new IndoorMap(leaflet, target, imageOverlay);
+	return await initMap({ target, imageOverlay });
 }
 
 interface MapConfig extends Pick<LeafletMapOptions, 'minZoom'> {
@@ -17,15 +15,12 @@ interface MapConfig extends Pick<LeafletMapOptions, 'minZoom'> {
 }
 
 /**Loads leaflet and the default background image in parallel */
-async function initMap({ imageOverlay }: MapConfig) {
+async function initMap({ imageOverlay, target }: MapConfig) {
   return Promise.all([
 		import('leaflet'),
 		loadImage(imageOverlay)
 	]).then(
-    ([{ default: L }, mapImage ]) => [L, mapImage] as const
-  ).then(
-    ([L]) => L
-  )
+    ([{ default: L }, mapImage ]) => new IndoorMap(L, target, mapImage))
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {

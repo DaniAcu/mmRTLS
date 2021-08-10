@@ -17,7 +17,7 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
     constructor(
         private readonly leaflet: typeof Leaflet,
         nativeElement: HTMLElement,
-        backgroundImage?: string,
+        backgroundImage: HTMLImageElement,
         minZoom = -1,
         private defaultIconConfig: MarkerIconSizeOptions = {
             origin: [0, 16],
@@ -80,24 +80,16 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
         this.leafletMap.setMaxBounds([minPos, maxPos]);
     }
 
-    public updateBackgroundImage(imageUrl: string, fitBoundsToImageSize = false): void {
-        const imageOverlay = this.leaflet.imageOverlay(imageUrl, this.leafletMap.getBounds());
+    private updateBackgroundImage(imageElement: HTMLImageElement, fitBoundsToImageSize = false): void {
+        const imageUrl = imageElement.src;
+        const bounds: Leaflet.LatLngBoundsExpression = [
+            [0, 0],
+            [imageElement.naturalHeight, imageElement.naturalWidth]
+        ];
+        const imageOverlay = this.leaflet.imageOverlay(imageUrl, bounds);
         imageOverlay.addTo(this.leafletMap);
         if (fitBoundsToImageSize) {
-            fromEvent(imageOverlay, 'load').pipe(
-                take(1),
-                takeUntil(fromEvent(imageOverlay, 'error'))
-            ).subscribe(() => {
-                const imageElement = imageOverlay.getElement();
-                if (imageElement) {
-                    const bounds: Leaflet.LatLngBoundsExpression = [
-                        [0, 0],
-                        [imageElement.naturalHeight, imageElement.naturalWidth]
-                    ];
-                    imageOverlay.setBounds(this.leaflet.latLngBounds(bounds));
-                    this.leafletMap.fitBounds(bounds);
-                }
-            })
+            this.leafletMap.fitBounds(bounds);
         }
     }
 
