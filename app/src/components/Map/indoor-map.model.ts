@@ -1,4 +1,3 @@
-import { fromEvent, take, takeUntil } from "rxjs";
 import type { IIndoorMap } from "src/interfaces/indoor-map.interface";
 import type { IIndoorMapMarker, IIndoorPosition } from "src/interfaces/position.interface";
 import type * as Leaflet from 'leaflet';
@@ -18,7 +17,6 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
         private readonly leaflet: typeof Leaflet,
         nativeElement: HTMLElement,
         backgroundImage: HTMLImageElement,
-        minZoom = -1,
         private defaultIconConfig: MarkerIconSizeOptions = {
             origin: [0, 16],
             size: 32
@@ -29,12 +27,9 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
             crs: this.leaflet.CRS.Simple,
             center: [0, 0],
             zoom: 0,
-            minZoom
         });
 
-        if (backgroundImage) {
-            this.updateBackgroundImage(backgroundImage, true);
-        }
+        this.updateBackgroundImage(backgroundImage, true);
     }
 
     public updateIconSize(iconSize: number, origin: [number, number] = [iconSize / 2, iconSize / 2]): void {

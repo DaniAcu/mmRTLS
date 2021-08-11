@@ -1,26 +1,19 @@
-import type {
-  MapOptions as LeafletMapOptions,
-} from 'leaflet';
 import type { IIndoorMap } from 'src/interfaces/indoor-map.interface';
+import type { MarkerIconSizeOptions } from 'src/interfaces/marker-icon.interface';
 import { IndoorMap } from './indoor-map.model';
-
-
-export async function createMap(target: HTMLElement, imageOverlay: string): Promise<IIndoorMap<never>> {
-	return await initMap({ target, imageOverlay });
-}
-
-interface MapConfig extends Pick<LeafletMapOptions, 'minZoom'> {
+interface MapConfig {
   imageOverlay: string;
   target: HTMLElement;
+  defaultIconConfig?: MarkerIconSizeOptions;
 }
 
 /**Loads leaflet and the default background image in parallel */
-async function initMap({ imageOverlay, target }: MapConfig) {
+export async function createMap({ imageOverlay, target, defaultIconConfig }: MapConfig): Promise<IIndoorMap<never>> {
   return Promise.all([
 		import('leaflet'),
 		loadImage(imageOverlay)
 	]).then(
-    ([{ default: L }, mapImage ]) => new IndoorMap(L, target, mapImage))
+    ([{ default: L }, mapImage ]) => new IndoorMap(L, target, mapImage, defaultIconConfig))
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
