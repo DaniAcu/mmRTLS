@@ -4,3 +4,9 @@ navDev/build/*
 navDev/.vscode
 navDev/main/build
 navDev/sdkconfig
+
+ctrlSrv/rest/node_modules
+ctrlSrv/docker/volumes
+ctrlSrv/rest/dist
+
+.vscode
