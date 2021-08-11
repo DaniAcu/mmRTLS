@@ -16,11 +16,11 @@ extern void Wifi_PrintDebug(const char *log);
 #define MAX_ENTRIES_ON_AP_CRED_LIST ( 32 )
 #define WIFI_VERBOSE                ( 1 )
 #define WIFI_USE_ROAMING            ( 1 )
-#define WIFI_PERSISTENT_CREDENTIALS ( 1 )
+#define WIFI_PERSISTENT_CREDENTIALS ( 0 )
 
 /*=====================Default AP =========================*/
-//#define WIFI_SSID                   "Paula"  // test_ pasar a flash
-//#define WIFI_PASS                   "1128424867" // test_ pasar a flash
+//#define WIFI_SSID                   "DEFAULT_AP_SSID"  // test_ pasar a flash
+//#define WIFI_PASS                   "DEFAULT_AP_PASSWORD" // test_ pasar a flash
 #define WIFI_RETRY_MAX              ( 5 )
 
 

@@ -73,7 +73,7 @@ rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *pa
     else if ( KNOWN_LIST_EMPTY != ismacknonw ) {
         char macstr[18] = {0};
         utilsMAC2str( rssiData.mac, macstr, sizeof(macstr)  );
-        ESP_LOGI( TAG, "%s ignored (not on the known list)\r\n", macstr );
+        ESP_LOGI( TAG, "%s ignored (not on the known list)", macstr );
     } 
 
     return rssiData;

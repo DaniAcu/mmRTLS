@@ -19,13 +19,13 @@ static void messageUnbundlerArrayOperationStoreKnownList( void *nlist );
 static void messageUnbundlerArrayOperationCleanKnownList( void *nlist )
 {
     uint8_t *knownList = (uint8_t*)nlist;
-    ESP_LOGI( TAG, "{Known list} Clear the list before getting the new one\r\n" );
+    ESP_LOGI( TAG, "{Known list} Clear the list before getting the new one" );
     memset( knownList, 0, MAXKNOWN_NODES_LIST_SIZE );
 }
 /*============================================================================*/
 static void messageUnbundlerArrayOperationCleanCredentials( void *nlist )
 {
-    ESP_LOGI( TAG, "{AP credential list} Clear the list before getting the new one\r\n" );
+    ESP_LOGI( TAG, "{AP credential list} Clear the list before getting the new one" );
     wifi_handler_ap_credentials_t *clist = (wifi_handler_ap_credentials_t*)nlist;
     memset( clist, 0, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
 }
@@ -39,7 +39,7 @@ static bool messageUnbundlerArrayOperationGetKnownNodes( const cJSON *item, size
         uint8_t *knownList = (uint8_t*)nlist;
 
         char *itemstr = cJSON_GetStringValue( item );
-        ESP_LOGI( TAG,  "[%d]: %s \r\n", index, itemstr );
+        ESP_LOGI( TAG,  "[%d]: %s", index, itemstr );
         utils_str2MAC( itemstr, imac );
         memcpy( &knownList[index*6], imac, sizeof(imac) );
         retVal = false;
@@ -61,7 +61,7 @@ static bool messageUnbundlerArrayOperationGetCredentials( const cJSON *item, siz
         strmac = cJSON_GetStringValue( jmac );
         strpwd = cJSON_GetStringValue( jpwd );
 
-        ESP_LOGI( TAG, "[%d]: %s : %s \r\n", index, strmac, strpwd );
+        ESP_LOGI( TAG, "[%d]: %s : %s", index, strmac, strpwd );
         utils_str2MAC( strmac, clist[ index ].macaddr );
         strncpy( clist[ index ].pwd, strpwd, MAX_CRED_PWD_LENGTH );
         retVal = false;
