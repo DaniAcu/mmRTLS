@@ -65,7 +65,7 @@ static void  wifiHandlerInit(void) {
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
  
-    #ifdef TARGET_ESP32
+    #ifdef CONFIG_IDF_TARGET_ESP32
         esp_netif_create_default_wifi_sta();
         esp_event_handler_instance_t instance_any_id;
         esp_event_handler_instance_t instance_got_ip;

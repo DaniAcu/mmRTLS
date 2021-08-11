@@ -9,6 +9,12 @@
 // Documentation:
 // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/nvs_flash.html
 
+#ifdef CONFIG_IDF_TARGET_ESP32
+#define NVS_HDLR nvs_handle_t
+#else 
+#define NVS_HDLR nvs_handle
+#endif
+
 
 #define STORAGE_NAMESPACE "storage"
 static const char *TAG = "NVM Storage";
@@ -29,7 +35,7 @@ int32_t initializeNVSRegistry(void)
 
 int32_t getValueFromNVSRegistry(const char *key, void *outValue, NvsRegistryDataType dataType, size_t length)
 {
-    nvs_handle handle;
+    NVS_HDLR handle;
     esp_err_t err = nvs_open(STORAGE_NAMESPACE,NVS_READONLY , &handle); /*NVS_READWRITE*/
 
     if (err != ESP_OK) {
@@ -64,7 +70,7 @@ int32_t getValueFromNVSRegistry(const char *key, void *outValue, NvsRegistryData
 }
 
 int32_t setValueToNVSRegistry(const char *key, void *inValue, NvsRegistryDataType dataType) {
-    nvs_handle handle;
+    NVS_HDLR handle;
     esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &handle);
     if ( ESP_OK != err ) {
         ESP_LOGE( TAG, "Error (%s) opening NVS handle!\n", esp_err_to_name(err) );
@@ -104,7 +110,7 @@ int32_t setValueToNVSRegistry(const char *key, void *inValue, NvsRegistryDataTyp
 
 int32_t setDataBlockRawToNvs( const char *key, void *input, size_t len  )
 {
-    nvs_handle_t my_handle;
+    NVS_HDLR my_handle;
     uint8_t* inputData = (uint8_t*)input;
     
     esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
@@ -133,7 +139,7 @@ int32_t setDataBlockRawToNvs( const char *key, void *input, size_t len  )
 
 int32_t getDataBlockRawFromNvs( const char *key, void *output, size_t len )
 {
-    nvs_handle_t my_handle;
+    NVS_HDLR my_handle;
     
     esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &my_handle);
     if ( ESP_OK != err ) {
