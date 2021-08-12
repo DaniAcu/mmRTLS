@@ -16,28 +16,18 @@
 #include "sntpUpdate.h"
 #include <string.h>
 
+#include "ieee80211_structs.h"
+
 //Global Data
 static const char *TAG = "scanner";
 static wifi_handler_data_t wifi_data ;
 QueueHandle_t scannerMessageQueue;
-
-#define SCANNER_IS_PROBE_REQPACKET(fc)        ( ( (fc) & 0xFF00 ) == 0x4000 )
 
 
 typedef struct scannerParams {
     uint8_t  channels;
     uint16_t timeBetweenChannels;
 } scannerParams;
-
-typedef struct {
-	int16_t fctl;               /*frame control*/
-	int16_t duration;           /*duration id*/
-	uint8_t da[6];              /*receiver address*/
-	uint8_t sa[6];              /*sender address*/
-	uint8_t bssid[6];           /*filtering address*/
-	int16_t seqctl;             /*sequence control*/
-	unsigned char payload[];    /*network data*/
-} __attribute__((packed)) wifi_mgmt_hdr;
 
 #if ( WIFI_USE_ROAMING == 1 )
 static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst );
@@ -49,14 +39,13 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
     #if ( WIFI_USE_ROAMING == 1 )
     int index;
     #endif
-    wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buffer;
+    wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buffer; /* First layer: type cast the received buffer into our generic SDK structure*/
    
-    if (type == 0) {
+    if( WIFI_PKT_MGMT == type ) {
         rssiData_t rssiData = processWifiPacket(&(pkt->rx_ctrl),  pkt->payload);
         if (rssiData.isValid) {
             xQueueSend( scannerMessageQueue, &rssiData, portMAX_DELAY );
         }
-
         #if ( WIFI_USE_ROAMING == 1 )
         if ( ( index = wifiHandlerGetAPIndexFromListbyMAC( rssiData.mac ) ) > 0 ) { 
             char ssid[ MAX_SSID_NAME_LENGTH ]= { 0 };
@@ -72,18 +61,19 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
 static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst )
 {
     char *retVal = NULL;
-    wifi_mgmt_hdr *mgmt = (wifi_mgmt_hdr *)pkt->payload;
-    int fc;
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)pkt->payload;  /* Second layer: define pointer to where the actual 802.11 packet is within the structure*/
+    const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;  /* Third layer: define pointers to the 802.11 packet header and payload*/
+    const wifi_header_frame_control_t *frame_ctrl = (wifi_header_frame_control_t *)&hdr->frame_ctrl;   /*Pointer to the frame control section within the packet header*/ 
 
-    fc = ntohs( mgmt->fctl );
-    if( SCANNER_IS_PROBE_REQPACKET(fc) ) {
-        uint8_t ssid_len;
-        ssid_len = pkt->payload[ 25 ];
-        if( ( ssid_len > 0 ) && ( ssid_len < MAX_SSID_NAME_LENGTH ) ){
-            memcpy( dst, (char*)&pkt->payload[ 25 ], ssid_len );
-            dst[ ssid_len ] = '\0'; /*just to be sure*/
-            retVal = dst;
+    if (frame_ctrl->type == WIFI_PKT_MGMT && frame_ctrl->subtype == BEACON){
+        const wifi_mgmt_beacon_t *beacon_frame = (wifi_mgmt_beacon_t*) ipkt->payload;  
+        if (beacon_frame->tag_length >= 32) {
+            strncpy(dst, beacon_frame->ssid, 31);
         }
+        else{
+            strncpy(dst, beacon_frame->ssid, beacon_frame->tag_length);
+        } 
+        retVal = dst;
     }
     return retVal;
 }
