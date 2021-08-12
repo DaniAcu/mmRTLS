@@ -37,6 +37,7 @@ typedef enum{
     MQTT_CLIENT_SUBSCRIBED         = BIT1,
     MQTT_CLIENT_EVENT_PUBLISHED    = BIT2,
     MQTT_CLIENT_DISCONNECTED       = BIT3,
+    MQTT_CLIENT_UNSUBSCRIBED       = BIT4,
 }mqttClient_event_bits_t;
 
 typedef struct{
@@ -69,9 +70,9 @@ static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, in
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
             xEventGroupSetBits( me->eventGroupMQTT, MQTT_CLIENT_CONNECTED );
-            msg_id = esp_mqtt_client_subscribe(client, CONFIG_MQTT_TOPIC_DATA, 1);
+            msg_id = esp_mqtt_client_subscribe(client, CONFIG_MQTT_TOPIC_AP_CREDENTIALS, 0);
             ESP_LOGI(TAG, "esp_mqtt_client_subscribe, ret/msg_id=%d", msg_id);
-            msg_id = esp_mqtt_client_subscribe(client, CONFIG_MQTT_TOPIC_KNOWN_NODES, 1);
+            msg_id = esp_mqtt_client_subscribe(client, CONFIG_MQTT_TOPIC_KNOWN_NODES, 0);
             ESP_LOGI(TAG, "esp_mqtt_client_subscribe, ret/msg_id=%d", msg_id);
             break;
         case MQTT_EVENT_DISCONNECTED:
@@ -84,6 +85,7 @@ static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, in
             break;            
         case MQTT_EVENT_UNSUBSCRIBED:
             ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+            xEventGroupSetBits( me->eventGroupMQTT, MQTT_CLIENT_UNSUBSCRIBED );
             break;
         case MQTT_EVENT_PUBLISHED:
             ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
@@ -92,12 +94,21 @@ static void mqttClientEventHandler(void *handler_args, esp_event_base_t base, in
         case MQTT_EVENT_DATA:
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");      
             if ( NULL != strstr( event->topic, CONFIG_MQTT_TOPIC_KNOWN_NODES )) {
-                ESP_LOGI(TAG, "========== CONFIG_MQTT_TOPIC_KNOWN_NODES ========" );
+                ESP_LOGI(TAG, "========== CONFIG_MQTT_TOPIC_KNOWN_NODES ==========" );
                 messageUnbundlerRetrieveKnownNodes( event->data ); 
+            }
+            else if ( NULL != strstr( event->topic, CONFIG_MQTT_TOPIC_AP_CREDENTIALS )) {
+                ESP_LOGI(TAG, "========== CONFIG_AP_CREDENTIAL_LIST ==========" );
+                #if ( WIFI_USE_ROAMING == 1 )
+                    messageUnbundlerRetrieveCredenditals( event->data );
+                #endif
+            }
+            else {
+                ESP_LOGE(TAG, "Unknown topic :  %s", event->topic );
             }
             break;
         case MQTT_EVENT_ERROR:
-            ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+            ESP_LOGE(TAG, "MQTT_EVENT_ERROR");
             break;             
         default:
             break;
@@ -124,25 +135,26 @@ static void mqttClientTask( void *pvParameter )
             messageBundlerInsert( &UplinkPacket_Scan, &rssiData );
             ++count;
         } else {
-            printf("[mqttClientTask] Message - error\n");
+            ESP_LOGE( TAG, "xQueueReceive message");
         }
 
         /*Test Code: every x messages we disable scan and wait connection to send messages*/
         if ( count > CONFIG_MQTT_MAXENTRIES_IN_TOPICDATA ) {
             count = 0;
-            printf("[mqttClientTask] Disabling scan mode to send data\n");
+            ESP_LOGI( TAG, "Disabling scan mode to send data");
             wifiHandlerScanMode( false );
             xEventGroupWaitBits( me->eventGroupWifi,  WIFI_CONNECTED, false, true, portMAX_DELAY);
-            printf("[mqttClientTask] Connecting MQTT Client...\n");
+            ESP_LOGI( TAG, "Connecting MQTT Client...");
             mqttClientConnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_CONNECTED | MQTT_CLIENT_SUBSCRIBED, true, true, portMAX_DELAY );
-            printf("[mqttClientTask] Sending data...\n");
+            ESP_LOGI( TAG, "Sending data...");
             messageBundlerPublish( &UplinkPacket_Scan, mqttClientPacketSend, me->client );
-            printf("[mqttClientTask] Stopping MQTT Client...\n");
+            xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_EVENT_PUBLISHED, true, true, CONFIG_MQTT_REVDATA_TIMEOUT/portTICK_PERIOD_MS );
+            ESP_LOGI( TAG, "Stopping MQTT Client...");
             mqttClientDisconnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_DISCONNECTED, true, true, portMAX_DELAY );
             mqttClientStopClient( me );
-            printf("[mqttClientTask] Re-enabling scan mode\n");
+            ESP_LOGI( TAG, "Re-enabling scan mode");
             messageBundlerCleanup( &UplinkPacket_Scan );
             wifiHandlerScanMode( true ); /*re-enable the scanmode*/
         }
@@ -152,14 +164,14 @@ static void mqttClientTask( void *pvParameter )
 static void mqttClientPacketSend( char *packet, void *client )
 {
     esp_mqtt_client_handle_t hClient = (esp_mqtt_client_handle_t)client;
-    ESP_LOGI(TAG, "esp_mqtt_client_publish, ret/msg_id=%d", esp_mqtt_client_publish( hClient, CONFIG_MQTT_TOPIC_DATA, packet , 0, 1, 0) );
+    ESP_LOGI(TAG, "esp_mqtt_client_publish, ret/msg_id=%d", esp_mqtt_client_publish( hClient, CONFIG_MQTT_TOPIC_DATA, packet , 0, 1, 0) ); 
 }
 /*====================================================================================*/
 esp_err_t mqttClientStart( QueueHandle_t messageQueue, EventGroupHandle_t eventGroup )
 {
     static mqttClient_t *me = NULL; 
     esp_err_t retValue = ESP_FAIL;
-    if( NULL == me ){
+    if( NULL == me ) {
         me = &mqttClientInstance; 
         me->eventGroupWifi = eventGroup;
         me->eventGroupMQTT = xEventGroupCreate();
@@ -183,6 +195,9 @@ static void mqttClientInitClient( mqttClient_t *me )
 static void mqttClientDisconnect( mqttClient_t *me )
 {
     esp_err_t err;
+    esp_mqtt_client_unsubscribe( me->client, CONFIG_MQTT_TOPIC_AP_CREDENTIALS );
+    esp_mqtt_client_unsubscribe( me->client, CONFIG_MQTT_TOPIC_KNOWN_NODES );
+    xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_UNSUBSCRIBED, true, true, 200/portTICK_PERIOD_MS );
     err = esp_mqtt_client_disconnect( me->client );
     if ( err ) {
         ESP_LOGE(TAG, "esp_mqtt_client_start, %s", esp_err_to_name(err));

@@ -1,4 +1,3 @@
-
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import type { IIndoorMap } from '../../interfaces/indoor-map.interface';
@@ -16,7 +15,7 @@
   MapContext.set(() => map);
 
   onMount(async () => {
-      map = await createMap(mapNode, config.imageOverlay);
+      map = await createMap({imageOverlay: config.imageOverlay, target: mapNode});
   });
 
   onDestroy(() =>  {

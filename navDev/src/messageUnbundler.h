@@ -9,5 +9,6 @@
     #include "cJSON.h"
 
     int messageUnbundlerRetrieveKnownNodes( char *incoming );
+    int messageUnbundlerRetrieveCredenditals( char *incoming );
 
 #endif /*MESSAGEUNBUNDLER_H*/

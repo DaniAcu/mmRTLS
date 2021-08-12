@@ -1,50 +1,9 @@
-import { Observable, zip } from 'rxjs';
-import { catchError, map, of } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
-import type { Beacon } from 'src/interfaces/beacon.interface';
+import { Marker, MarkerType } from "./marker.types";
 import type { NavDevice } from 'src/interfaces/nav-device.interface';
+import { catchError, map, Observable, of } from "rxjs";
+import { fromFetch } from "rxjs/fetch";
 
-export enum MarkerType {
-  BEACON = "BEACON",
-  NAVDEV = "NAVDEV"
-}
-
-interface Marker {
-  id: string;
-  type: MarkerType;
-  icon?: string;
-  lat: number;
-  lng: number;
-}
-
-export const getMarkers = (): Observable<Marker[]> => 
-  zip(
-    beaconsStream,
-    navDevicesStream
-  ).pipe(map(x => x.flat()))
-
-const beaconsStream:  Observable<Marker[]> = 
-  fromFetch('http://localhost:3000/beacons', {
-    selector: response => response.json() as Promise<Beacon[]>
-  }).pipe(
-    catchError(err => {
-      console.error(err);
-      return of([] as Beacon[])
-    }),
-    map(beacons => beacons.map(fromBeaconToMarker))
-  );
-
-function fromBeaconToMarker(beacon: Beacon): Marker {
-  return {
-    id: `beacon-${beacon.beaconId}`,
-    type: MarkerType.BEACON,
-    icon: './static/markers/antenna.png',
-    lat: beacon.x,
-    lng: beacon.y
-  }
-}
-
-const navDevicesStream:  Observable<Marker[]> = 
+export const navDevices$:  Observable<Marker[]> = 
   fromFetch(
     generateGetNavDeviceURL("http://localhost:3000/nav-devs"), 
     {
@@ -53,7 +12,7 @@ const navDevicesStream:  Observable<Marker[]> =
   ).pipe(
     catchError(err => {
       console.error(err);
-      return of([])
+      return of([] as NavDevice[])
     }),
     map(navDevs => 
       navDevs

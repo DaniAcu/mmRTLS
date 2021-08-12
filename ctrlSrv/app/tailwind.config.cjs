@@ -68,12 +68,12 @@ module.exports = {
 			black: '#000',
 
 			...buildPalette({
-				primary: '#009292',
-				secondary: '#009688',
-				error: '#f44336',
-				success: '#4caf50',
-				alert: '#ff9800',
-				blue: '#2196f3',
+				primary: '#004d40',
+				secondary: '#00695c',
+				error: '#d32f2f',
+				success: '#66bb6a',
+				alert: '#fff176',
+				blue: '#1e88e5',
 				dark: '#212121'
 			}),
 
