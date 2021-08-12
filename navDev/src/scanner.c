@@ -67,12 +67,7 @@ static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *ds
 
     if (frame_ctrl->type == WIFI_PKT_MGMT && frame_ctrl->subtype == BEACON){
         const wifi_mgmt_beacon_t *beacon_frame = (wifi_mgmt_beacon_t*) ipkt->payload;  
-        if (beacon_frame->tag_length >= 32) {
-            strncpy(dst, beacon_frame->ssid, 31);
-        }
-        else{
-            strncpy(dst, beacon_frame->ssid, beacon_frame->tag_length);
-        } 
+        strncpy( dst, beacon_frame->ssid, (beacon_frame->tag_length >= 32 )? 31 : beacon_frame->tag_length );
         retVal = dst;
     }
     return retVal;
