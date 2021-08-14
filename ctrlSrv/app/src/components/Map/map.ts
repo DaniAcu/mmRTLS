@@ -3,7 +3,8 @@ import type {
   LatLngBoundsExpression, 
   LatLngLiteral,
   Marker,
-  IconOptions
+  IconOptions,
+  LeafletEventHandlerFn
 } from 'leaflet';
 
 import 'leaflet/dist/leaflet.css';
@@ -13,6 +14,7 @@ interface MarkerOptions extends LatLngLiteral {
 }
 
 export interface Map {
+  addEventListener(eventName: string, callback: LeafletEventHandlerFn): void;
   addMarker(latLng: MarkerOptions): void;
   removeMarker(latLng: MarkerOptions): void;
   delete(): void;
@@ -26,6 +28,9 @@ export async function createMap(target: HTMLElement, imageOverlay: string): Prom
 	const [L, map] = await initMap({ target, imageOverlay });
 
 	return {
+    addEventListener(eventName: string, callback: LeafletEventHandlerFn) {
+      map.on(eventName, callback);
+    },
     addMarker({ icon: iconUrl, ...latLng}: MarkerOptions){
       const key = generateMarkerKey(latLng);
       const iconOptions = createIcon(iconUrl);

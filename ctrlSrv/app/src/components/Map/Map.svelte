@@ -1,10 +1,12 @@
 
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, createEventDispatcher } from "svelte";
 
   import MapContext from "./map-context";
   import { createMap } from './map';
   import type { Map } from './map';
+
+  const dispatch = createEventDispatcher();
   
   export const config = {
     imageOverlay: "./static/indoor-map.png"
@@ -20,7 +22,11 @@
     if(skipSSR) return;
     
     createMap(mapNode, config.imageOverlay)
-      .then(m => map = m);
+      .then(m => {
+        map = m;
+
+        map.addEventListener("click", () => dispatch("click"));
+      });
   });
 
   onDestroy(() =>  {
@@ -39,7 +45,6 @@
 
 <style>
   .map {
-    min-height: 32rem;
 		height: 100%;
     width: 100%;;
 	}
