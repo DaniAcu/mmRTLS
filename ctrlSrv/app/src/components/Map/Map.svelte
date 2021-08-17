@@ -1,21 +1,40 @@
 <script lang="ts">
+import type { IIndoorPosition } from "src/interfaces/position.interface";
+
   import { onDestroy, onMount } from "svelte";
-  import type { IIndoorMap } from '../../interfaces/indoor-map.interface';
+  import type { IConfigurableIndoorMap, IIndoorMap } from '../../interfaces/indoor-map.interface';
   import type { IndoorMap } from "./indoor-map.model";
-  import { createMap } from "./map";
+  import { createMap, loadImage } from "./map";
   import MapContext from "./map-context";
   
-  export const config = {
-    imageOverlay: "./static/indoor-map.png"
+  let map: IIndoorMap<any>;
+  export let backgroundImage = './static/indoor-map.png';
+  $: {
+    if (map && backgroundImage) {
+      const configurableMap = map as IConfigurableIndoorMap<any>;
+      loadImage(backgroundImage).then((image) => {
+        configurableMap.updateBackgroundImage(image);
+      });
+    }
+  }
+
+  export let mapSize: IIndoorPosition = {
+    x: NaN,
+    y: NaN
   };
 
+  $: {
+    if (map && mapSize.x && mapSize.y) {
+      map.setBounds(mapSize);
+    }
+  }
+
   let mapNode: HTMLDivElement;
-  let map: IIndoorMap<any>;
 
   MapContext.set(() => map);
 
   onMount(async () => {
-      map = await createMap({imageOverlay: config.imageOverlay, target: mapNode});
+      map = await createMap({imageOverlay: backgroundImage, target: mapNode});
   });
 
   onDestroy(() =>  {

@@ -12,3 +12,7 @@ export interface IIndoorMapActions {
 }
 
 export type IIndoorMap<T extends IIndoorMapMarker> = IIndoorMapMarkersInteractions<T> & IIndoorMapActions;
+
+export interface IConfigurableIndoorMap<T extends IIndoorMapMarker> extends IIndoorMap<T> {
+    updateBackgroundImage: (backgroundImage: HTMLImageElement) => void;
+}

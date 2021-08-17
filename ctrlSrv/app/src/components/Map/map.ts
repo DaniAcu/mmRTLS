@@ -16,13 +16,22 @@ export async function createMap({ imageOverlay, target, defaultIconConfig }: Map
     ([{ default: L }, mapImage ]) => new IndoorMap(L, target, mapImage, defaultIconConfig))
 }
 
-function loadImage(src: string): Promise<HTMLImageElement> {
+export function loadImage(src: string): Promise<HTMLImageElement> {
 	return new Promise((resolve) => {
 		const image = new Image(0, 0);
 		image.src = src;
 		image.hidden = true;
 
-		image.addEventListener("load", () => resolve(image))
+		image.addEventListener("load", () => {
+			resolve(image);
+		});
+
+		image.addEventListener('error', () => {
+			image.width = 1;
+			image.height = 1;
+			resolve(image);
+		})
+
 
 		document.body.appendChild(image);
 		document.body.removeChild(image);
