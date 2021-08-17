@@ -1,32 +1,27 @@
-
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-
+  import type { IIndoorMap } from '../../interfaces/indoor-map.interface';
+  import type { IndoorMap } from "./indoor-map.model";
+  import { createMap } from "./map";
   import MapContext from "./map-context";
-  import { createMap } from './map';
-  import type { Map } from './map';
   
   export const config = {
     imageOverlay: "./static/indoor-map.png"
   };
 
   let mapNode: HTMLDivElement;
-  let map: Map;
+  let map: IIndoorMap<any>;
 
   MapContext.set(() => map);
 
-  onMount(() => {
-    const skipSSR = typeof window === "undefined";  
-    if(skipSSR) return;
-    
-    createMap(mapNode, config.imageOverlay)
-      .then(m => map = m);
+  onMount(async () => {
+      map = await createMap({imageOverlay: config.imageOverlay, target: mapNode});
   });
 
   onDestroy(() =>  {
     if(!map) return;
 
-    map.delete()
+    (map as IndoorMap<any>).destroy();
   });
 
 </script>

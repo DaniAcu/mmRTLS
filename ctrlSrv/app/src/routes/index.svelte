@@ -14,7 +14,7 @@
 <div class="container">
   <Map>
     {#each $markers as {lat, lng, id, icon} (id)}
-      <Marker {lat} {lng} {icon}/>
+      <Marker x={lat} y={lng} {id} {icon}/>
     {/each}
   </Map>
 </div>
