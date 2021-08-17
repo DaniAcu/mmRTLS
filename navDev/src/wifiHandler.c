@@ -17,11 +17,8 @@
 
 static const char *TAG = "wifiHandler";
 static wifi_handler_data_t wifi_data;
-static uint8_t lastChannel = 1;
-
+static uint8_t lastChannel = 1u;
 static wifi_handler_ap_credentials_t apCredential_list[ MAX_ENTRIES_ON_AP_CRED_LIST ] = { false };
-
-static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 );
 
 static wifi_config_t wifi_config = {
     .sta = {
@@ -35,10 +32,13 @@ static wifi_config_t wifi_config = {
     },
 };
 
+static int wifiHandlerRSSICmpFcn( const void *item1, const void *item2 );
+
 /** 
  * wifi events 
  */
-static void wifiEventhandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+static void wifiEventhandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) 
+{
     if (event_base == WIFI_EVENT) {
         if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
             ESP_LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED");
@@ -58,7 +58,8 @@ static void wifiEventhandler(void* arg, esp_event_base_t event_base, int32_t eve
     }
 }
 
-static void  wifiHandlerInit(void) {
+static void  wifiHandlerInit(void) 
+{
     esp_netif_init();
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_data.eventGroup  = xEventGroupCreate();
@@ -92,7 +93,8 @@ static void  wifiHandlerInit(void) {
 /**
  *  START CONFIG
  */
-int32_t wifiHandlerStart(uint8_t nChannels, wifi_promiscuous_cb_t wifiPacketHandler) {
+int32_t wifiHandlerStart(uint8_t nChannels, wifi_promiscuous_cb_t wifiPacketHandler) 
+{
     memset( apCredential_list, 0, sizeof(apCredential_list) ); 
     wifi_data.nChannels = nChannels;
     wifi_data.packetHandler = wifiPacketHandler;
@@ -112,15 +114,17 @@ int32_t wifiHandlerStart(uint8_t nChannels, wifi_promiscuous_cb_t wifiPacketHand
     return ESP_OK;
 }
 
-void wifihandlerSetChannel(uint8_t channel) {
+void wifihandlerSetChannel(uint8_t channel) 
+{
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 }
 
-int32_t wifiHandlerScanMode(bool enabled) {
+int32_t wifiHandlerScanMode(bool enabled) 
+{
     xEventGroupClearBits(wifi_data.eventGroup, enabled ? WIFI_SCAN_STOP  : WIFI_SCAN_START);
     xEventGroupSetBits(  wifi_data.eventGroup, enabled ? WIFI_SCAN_START : WIFI_SCAN_STOP);   
  
-    if ( true == enabled ){
+    if ( true == enabled ) {
         xEventGroupWaitBits(wifi_data.eventGroup, WIFI_DISCONNECTED , false, true, portMAX_DELAY);
     }
  
@@ -129,11 +133,13 @@ int32_t wifiHandlerScanMode(bool enabled) {
     return ESP_OK;
 }
 
-void wifiHandlerSaveChannel(uint8_t currentChan){
+void wifiHandlerSaveChannel(uint8_t currentChan)
+{
     lastChannel = currentChan;
 }
 
-uint8_t wifiHandlerGetSavedChannel(void){
+uint8_t wifiHandlerGetSavedChannel(void)
+{
     return lastChannel;
 }
 
@@ -155,7 +161,8 @@ int32_t wifiHandler_getStatusConnection(void)
 /**
  * TASK 
 */
-void wifiHandlerAPTask( void* taskParmPtr ) {
+void wifiHandlerAPTask( void* taskParmPtr ) 
+{
     uint8_t retryConCnt = 0;
     EventBits_t xBits;
     ESP_LOGI( TAG, "Started, Waiting wifi module to be ready...");
@@ -184,7 +191,7 @@ void wifiHandlerAPTask( void* taskParmPtr ) {
         } else if ( (xBits & WIFI_CONNECTED ) && (xBits & WIFI_CONNECTING )  ) {
             xEventGroupClearBits(wifi_data.eventGroup, WIFI_DISCONNECTED|WIFI_CONN_FAILED|WIFI_CONNECTING);
             retryConCnt = 0;
-        } else if ( (xBits & WIFI_SCAN_START ) && (xBits & WIFI_CONNECTED ) ){
+        } else if ( (xBits & WIFI_SCAN_START ) && (xBits & WIFI_CONNECTED ) ) {
             esp_wifi_disconnect();
         }
 
@@ -204,7 +211,7 @@ int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find )
     uint8_t nullentry[6] = { 0 };
     uint8_t *imac;
     
-    for( i = 0 ; i < MAX_ENTRIES_ON_AP_CRED_LIST; i++ ){
+    for ( i = 0 ; i < MAX_ENTRIES_ON_AP_CRED_LIST; i++ ) {
         imac = apCredential_list[ i ].macaddr;
         if ( 0 == memcmp( imac, nullentry, 6 ) ) { 
             index = -1; /*end of the list reached*/
@@ -221,8 +228,8 @@ int wifiHandlerGetAPIndexFromListbyMAC( uint8_t *mac2find )
 int wifiHandlerAPCredentialListInsertSSDI( int index, char *ssid, int8_t ap_rssid )
 {
     int retVal = -1;
-    if( index < MAX_ENTRIES_ON_AP_CRED_LIST ) {
-        if( 0 == strlen(apCredential_list[index].ssid) ){ /*only the first time, when the entry is empty*/
+    if ( index < MAX_ENTRIES_ON_AP_CRED_LIST ) {
+        if ( 0 == strlen(apCredential_list[index].ssid) ) { /*only the first time, when the entry is empty*/
             strncpy( apCredential_list[ index ].ssid, ssid, MAX_SSID_NAME_LENGTH  );
         }
         apCredential_list[ index ].rssi = ap_rssid; /*always keep the last*/
@@ -253,7 +260,7 @@ int wifiHandlerSetBestAPbyList( void )
     qsort( apCredential_list,  MAX_ENTRIES_ON_AP_CRED_LIST, sizeof(wifi_handler_ap_credentials_t), wifiHandlerRSSICmpFcn );
     bestSignalAp = apCredential_list[ 0 ]; /*AP with the best signal on top*/
 
-    if( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0u ) ) {
+    if ( ( bestSignalAp.valid ) && ( strlen( bestSignalAp.ssid ) > 0u ) ) {
         strncpy( (char*)wifi_config.sta.ssid, bestSignalAp.ssid, MAX_SSID_NAME_LENGTH );
         strncpy( (char*)wifi_config.sta.password, bestSignalAp.pwd, MAX_CRED_PWD_LENGTH );
         ESP_LOGI( TAG, "Connecting to AP [ %s ] with rssi = %d ...", bestSignalAp.ssid , bestSignalAp.rssi);
@@ -278,7 +285,7 @@ int wifiHandlerAPCredentialListStore( wifi_handler_ap_credentials_t *list )
     #if ( WIFI_PERSISTENT_CREDENTIALS == 1 )
     ret = setDataBlockRawToNvs( "apcredlist" , list, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
     #endif
-    if( ESP_OK == ret ){
+    if ( ESP_OK == ret ) {
         ESP_LOGI( TAG, "AP credential saved!" );
     }
     else {
@@ -293,9 +300,9 @@ int wifiHandlerAPCredentialListLoad( void )
     #if ( WIFI_PERSISTENT_CREDENTIALS == 1 )
     ret = getDataBlockRawFromNvs( "apcredlist", apCredential_list, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
     #endif
-    if( ESP_OK == ret ){
+    if ( ESP_OK == ret ) {
         uint32_t emptycheck = NVS_EMPTY_DWORD;
-        if( 0 == memcmp( &apCredential_list, &emptycheck, sizeof(emptycheck) ) ){
+        if ( 0 == memcmp( &apCredential_list, &emptycheck, sizeof(emptycheck) ) ) {
             ESP_LOGI( TAG, "AP credential area  empty, start with an empty list" );
             memset( &apCredential_list, 0x00, MAX_ENTRIES_ON_AP_CRED_LIST*sizeof(wifi_handler_ap_credentials_t) );
         }
