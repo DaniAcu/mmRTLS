@@ -13,7 +13,7 @@ function publishBeacons(mqttController, topic, beacons) {
     });
     let payload = { "beacons" : beaconList }
 
-    mqttController.publish(topic, payload, true)
+    mqttController.publish(topic, payload, true, true)
 }
 
 function main() {
