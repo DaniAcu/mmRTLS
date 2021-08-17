@@ -74,7 +74,7 @@ class MqttController {
         this.onConnectedListeners.push(callback)
     }
 
-    publish(topic, message, isJson) {
+    publish(topic, message, isJson, isPersistent) {
         if (!this.mqttClient.connected) {
             appLog("publish to " + topic + ": MQTT  is not connected" + error)
             return -1
@@ -83,7 +83,8 @@ class MqttController {
             message = JSON.stringify(message)
         }
         appLog("publishing to " + topic + ", payload = " + message)
-        this.mqttClient.publish(topic, message)
+        let options = { retain: isPersistent}
+        this.mqttClient.publish(topic, message, options)
     }
 
     disconnect() {
