@@ -9,3 +9,7 @@ export interface IIndoorMapMarker extends IEntity, IIndoorPosition {
     icon?: string;
     type: number;
 }
+
+export interface IIndoorMapMarkerEntity extends IIndoorMapMarker {
+    updatePosition: (newPosition: IIndoorPosition) => void;
+}

@@ -1,7 +1,7 @@
-import type { IIndoorMapMarker, IIndoorPosition } from "./position.interface";
+import type { IIndoorMapMarker, IIndoorMapMarkerEntity, IIndoorPosition } from "./position.interface";
 
 export interface IIndoorMapMarkersInteractions<T extends IIndoorMapMarker> {
-    addMarker(marker: T): void;
+    addMarker(marker: T): T & IIndoorMapMarkerEntity;
     removeMarker(markerId: T['id']): void;
     removeMarker(markerCoordinates: T & IIndoorPosition): void;
 }

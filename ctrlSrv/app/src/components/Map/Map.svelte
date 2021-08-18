@@ -14,6 +14,7 @@ import type { IIndoorPosition } from "src/interfaces/position.interface";
       const configurableMap = map as IConfigurableIndoorMap<any>;
       loadImage(backgroundImage).then((image) => {
         configurableMap.updateBackgroundImage(image);
+        configurableMap.setBounds(mapSize);
       });
     }
   }

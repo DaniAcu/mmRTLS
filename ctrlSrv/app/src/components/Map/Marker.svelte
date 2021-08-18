@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ICartesianMapMarker } from "src/interfaces/position.interface";
+    import type { ICartesianMapMarker, IIndoorMapMarkerEntity } from "src/interfaces/position.interface";
 
     import { onDestroy, onMount } from "svelte";
     import MapContext from "./map-context";
@@ -20,10 +20,19 @@
         icon: undefined
     };
 
+    $: {
+        if (x && y && markerEntity) {
+            markerEntity.updatePosition({x, y});
+        }
+    }
+
 
     const map = MapContext.get();
+    let markerEntity: IIndoorMapMarkerEntity;
 
-    onMount(() => map.addMarker({ x, y, id, name, icon, type }));
+    onMount(() => {
+        markerEntity = map.addMarker({ x, y, id, name, icon, type });
+    });
 
     onDestroy(() => map.removeMarker({ x, y, id, name, icon, type }));
 </script>

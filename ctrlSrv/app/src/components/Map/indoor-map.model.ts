@@ -1,7 +1,8 @@
 import type { IConfigurableIndoorMap } from "src/interfaces/indoor-map.interface";
-import type { IIndoorMapMarker, IIndoorPosition } from "src/interfaces/position.interface";
+import type { IIndoorMapMarker, IIndoorMapMarkerEntity, IIndoorPosition } from "src/interfaces/position.interface";
 import type * as Leaflet from 'leaflet';
 import type { MarkerIconOptions, MarkerIconSizeOptions } from "src/interfaces/marker-icon.interface";
+import { IndoorMapMarker } from "./indoor-map-marker.model";
 
 const generateIcon = (leaflet: typeof Leaflet, {iconUrl, size, origin}: MarkerIconOptions) => leaflet.icon({
     iconUrl: iconUrl,
@@ -11,14 +12,14 @@ const generateIcon = (leaflet: typeof Leaflet, {iconUrl, size, origin}: MarkerIc
 export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoorMap<T> {
 
     private readonly leafletMap: Leaflet.Map;
-    private readonly markersMap: Map<T['id'], Leaflet.Marker> = new Map();
+    private readonly markersMap: Map<T['id'], IndoorMapMarker> = new Map();
 
     private imageOverlay!: Leaflet.ImageOverlay;
 
     constructor(
         private readonly leaflet: typeof Leaflet,
         nativeElement: HTMLElement,
-        backgroundImage: HTMLImageElement,
+        backgroundImage?: HTMLImageElement,
         private defaultIconConfig: MarkerIconSizeOptions = {
             origin: [0, 16],
             size: 32
@@ -31,7 +32,11 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoo
             zoom: 0,
         });
 
-        this.updateBackgroundImage(backgroundImage);
+        this.createBackgroundOverlay();
+
+        if (backgroundImage) {
+            this.updateBackgroundImage(backgroundImage);
+        }
     }
 
     public updateIconSize(iconSize: number, origin: [number, number] = [iconSize / 2, iconSize / 2]): void {
@@ -40,8 +45,8 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoo
         this.updateExistingMarkersIconsSizes(iconSize, origin);
     }
 
-    public addMarker({x, y, id, icon}: T): void {
-        const newMarker = new this.leaflet.Marker({
+    public addMarker({x, y, id, icon, type, name}: T): IIndoorMapMarkerEntity {
+        const newLeafletMarker = new this.leaflet.Marker({
             lat: y,
             lng: x
         });
@@ -50,9 +55,11 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoo
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             iconUrl: icon || this.leaflet.Icon.Default.imagePath!
         }
-        newMarker.setIcon(generateIcon(this.leaflet, iconConfig));
+        newLeafletMarker.setIcon(generateIcon(this.leaflet, iconConfig));
+        this.leafletMap.addLayer(newLeafletMarker);
+        const newMarker = new IndoorMapMarker(newLeafletMarker, type, id, name, x, y);
         this.markersMap.set(id, newMarker);
-        this.leafletMap.addLayer(newMarker);
+        return newMarker;
     }
 
     public removeMarker(markerOrMarkerId: T['id'] | IIndoorMapMarker): void {
@@ -60,36 +67,40 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoo
         const marker = this.markersMap.get(markerId);
         if (marker) {
             this.markersMap.delete(markerId);
-            marker.remove();
+            marker.destroy();
         }
     }
 
-    public setBounds(minOrMaxPosCoordinates: IIndoorPosition, maxPosCoordinates?: IIndoorPosition): void {
+    public setBounds({x: minMaxX, y: minMaxY}: IIndoorPosition, maxPosCoordinates?: IIndoorPosition): void {
+        if (!minMaxX || !minMaxY) {
+            return
+        }
         let minPos: Leaflet.LatLngTuple;
         let maxPos: Leaflet.LatLngTuple;
         if (maxPosCoordinates) {
-            minPos = [minOrMaxPosCoordinates.y, minOrMaxPosCoordinates.x];
+            minPos = [minMaxY, minMaxX];
             maxPos = [maxPosCoordinates.y, maxPosCoordinates.x];
         } else {
             minPos = [0, 0];
-            maxPos = [minOrMaxPosCoordinates.y, minOrMaxPosCoordinates.x];
+            maxPos = [minMaxY, minMaxX];
         }
         const bounds = this.leaflet.latLngBounds([minPos, maxPos]);
         this.imageOverlay.setBounds(bounds);
         this.leafletMap.fitBounds(bounds);
+        // this.leafletMap.setMinZoom(this.leafletMap.getZoom());
     }
 
-    public updateBackgroundImage(imageElement: HTMLImageElement, fitBoundsToImageSize = false): void {
-        if (this.imageOverlay) {
-            this.imageOverlay.remove();
-        }
+    public updateBackgroundImage(imageElement: HTMLImageElement, fitBoundsToImageSize = true): void {
         const imageUrl = imageElement.src;
+        const imageOverlayElement = this.imageOverlay.getElement();
+        if (imageOverlayElement) {
+            imageOverlayElement.src = imageUrl;
+        }
         const bounds: Leaflet.LatLngBoundsExpression = [
             [0, 0],
             [imageElement.naturalHeight, imageElement.naturalWidth]
         ];
-        this.imageOverlay = this.leaflet.imageOverlay(imageUrl, bounds);
-        this.imageOverlay.addTo(this.leafletMap);
+        this.imageOverlay.setBounds(this.leaflet.latLngBounds(bounds));
         if (fitBoundsToImageSize) {
             this.leafletMap.fitBounds(bounds);
         }
@@ -98,6 +109,11 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoo
     public destroy(): void {
         this.leafletMap.off();
         this.leafletMap.remove();
+    }
+
+    private createBackgroundOverlay() {
+        this.imageOverlay = this.leaflet.imageOverlay('', [[0, 0], [100, 100]]);
+        this.imageOverlay.addTo(this.leafletMap);
     }
 
     private updateExistingMarkersIconsSizes(iconSize: number, origin: [number, number] = [iconSize / 2, iconSize / 2]): void {
