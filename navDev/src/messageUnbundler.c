@@ -34,7 +34,7 @@ static bool messageUnbundlerArrayOperationGetKnownNodes( const cJSON *item, size
 {
     bool retVal = true;
 
-    if( index < CONFIG_PROCESSOR_MAXKNOWN_NODES ) {
+    if ( index < CONFIG_PROCESSOR_MAXKNOWN_NODES ) {
         uint8_t imac[6] = {0};
         uint8_t *knownList = (uint8_t*)nlist;
 
@@ -51,7 +51,7 @@ static bool messageUnbundlerArrayOperationGetCredentials( const cJSON *item, siz
 {
     bool retVal = true;
     
-    if( index < MAX_ENTRIES_ON_AP_CRED_LIST ) {
+    if ( index < MAX_ENTRIES_ON_AP_CRED_LIST ) {
         wifi_handler_ap_credentials_t *clist = (wifi_handler_ap_credentials_t*)nlist;
         char *strmac, *strpwd;
         cJSON *jmac, *jpwd;

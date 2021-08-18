@@ -3,26 +3,11 @@
 #include "utils.h"
 #include "esp_log.h"
 #include "nvsRegistry.h"
-
-
 #include <string.h>
+#include "ieee80211_structs.h"
+
 
 static const char *TAG = "packetProcessor";
-
-typedef struct {
-    unsigned frame_ctrl:16;
-    unsigned duration_id:16;
-    uint8_t addr1[6]; /* receiver address */
-    uint8_t addr2[6]; /* sender address */
-    uint8_t addr3[6]; /* filtering address */
-    unsigned sequence_ctrl:16;
-    uint8_t addr4[6]; /* optional */
-} __attribute__((packed)) wifi_ieee80211_mac_hdr_t;
-
-typedef struct {
-    wifi_ieee80211_mac_hdr_t hdr;
-    uint8_t payload[0]; /* network data ended with 4 bytes csum (CRC32) */
-} __attribute__((packed)) wifi_ieee80211_packet_t;
 
 typedef enum {
     KNOWN_LIST_EMPTY = -2,
@@ -46,9 +31,7 @@ rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *pa
 
     struct timeval tp;
     KnownListStatus_t ismacknonw = KNOWN_LIST_NOT_FOUND;
-    rssiData_t rssiData = {
-        
-    };
+    rssiData_t rssiData = { };
 
     if (len < sizeof(wifi_ieee80211_mac_hdr_t)) {
         rssiData.isValid = false;
@@ -109,7 +92,7 @@ int processKnownListStore( uint8_t *list )
     #if ( CONFIG_PROCESSOR_PERSISTENT_KNOWN_NODES == 1 )
     ret = setDataBlockRawToNvs( "knownlist" , list, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
     #endif
-    if( ESP_OK == ret ){
+    if( ESP_OK == ret ) {
         ESP_LOGI( TAG, "Known nodes list saved!" );
     }
     else {
@@ -126,7 +109,7 @@ int processKnownListLoad( void )
     #endif
     if( ESP_OK == ret ){
         uint32_t emptycheck = NVS_EMPTY_DWORD;
-        if( 0 == memcmp( knownNodes, &emptycheck, sizeof(emptycheck) ) ){
+        if( 0 == memcmp( knownNodes, &emptycheck, sizeof(emptycheck) ) ) {
             ESP_LOGI( TAG, "knownlist area  empty, start with an empty list" );
             memset( knownNodes, 0x00, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
         }

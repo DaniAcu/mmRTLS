@@ -69,7 +69,8 @@ int32_t getValueFromNVSRegistry(const char *key, void *outValue, NvsRegistryData
     return err;
 }
 
-int32_t setValueToNVSRegistry(const char *key, void *inValue, NvsRegistryDataType dataType) {
+int32_t setValueToNVSRegistry(const char *key, void *inValue, NvsRegistryDataType dataType) 
+{
     NVS_HDLR handle;
     esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &handle);
     if ( ESP_OK != err ) {
