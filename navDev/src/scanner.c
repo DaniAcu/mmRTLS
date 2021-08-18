@@ -47,10 +47,10 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
             xQueueSend( scannerMessageQueue, &rssiData, portMAX_DELAY );
         }
         #if ( WIFI_USE_ROAMING == 1 )
-        if ( ( index = wifiHandlerGetAPIndexFromListbyMAC( rssiData.mac ) ) > 0 ) { 
-            char ssid[ MAX_SSID_NAME_LENGTH ]= { 0 };
+        if ( ( index = wifiHandlerGetAPIndexFromListbyMAC( rssiData.mac ) ) >= 0 ) { 
+            char ssid[ MAX_SSID_NAME_LENGTH ] = { 0 };
             if( NULL != wifiScannerGetSSIDFromPacket( pkt, ssid ) ){
-                wifiHandlerAPCredentialListInsertSSDI( index, ssid, rssiData.rssi  );
+                wifiHandlerAPCredentialListInsertSSDI( index, ssid, rssiData.rssi );
             }          
         }
         #endif
@@ -65,7 +65,7 @@ static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *ds
     const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;  /* Third layer: define pointers to the 802.11 packet header and payload*/
     const wifi_header_frame_control_t *frame_ctrl = (wifi_header_frame_control_t *)&hdr->frame_ctrl;   /*Pointer to the frame control section within the packet header*/ 
 
-    if (frame_ctrl->type == WIFI_PKT_MGMT && frame_ctrl->subtype == BEACON){
+    if ( ( WIFI_PKT_MGMT == frame_ctrl->type ) && ( BEACON == frame_ctrl->subtype ) ) {
         const wifi_mgmt_beacon_t *beacon_frame = (wifi_mgmt_beacon_t*) ipkt->payload;  
         strncpy( dst, beacon_frame->ssid, (beacon_frame->tag_length >= 32 )? 31 : beacon_frame->tag_length );
         retVal = dst;
@@ -105,7 +105,7 @@ void scannerTask(void *pvParameter)
 //Exposed API
 int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueHandle_t messageQueue, EventGroupHandle_t eventGroup)
 {
-    if (eventGroup == NULL) {
+    if ( NULL == eventGroup ) {
         ESP_LOGE( TAG, "wifiScannerStart: eventGroup can be null" );
         return ESP_ERR_INVALID_ARG;
     }
@@ -126,9 +126,3 @@ int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueH
     return ESP_OK;
 }
 
-void Wifi_PrintDebug(const char *log) 
-{
-    #if (1  == WIFI_VERBOSE )
-        printf(log);
-    #endif
-}

@@ -131,7 +131,7 @@ static void mqttClientTask( void *pvParameter )
     printf("mqtt_ClientTask Started, waiting for messages\n");   
 
     for (;;) {
-        if (xQueueReceive( me->messageQueue, &rssiData, portMAX_DELAY ) == pdPASS){
+        if ( pdPASS == xQueueReceive( me->messageQueue, &rssiData, portMAX_DELAY ) ) {
             messageBundlerInsert( &UplinkPacket_Scan, &rssiData );
             ++count;
         } else {
@@ -171,7 +171,7 @@ esp_err_t mqttClientStart( QueueHandle_t messageQueue, EventGroupHandle_t eventG
 {
     static mqttClient_t *me = NULL; 
     esp_err_t retValue = ESP_FAIL;
-    if( NULL == me ) {
+    if ( NULL == me ) {
         me = &mqttClientInstance; 
         me->eventGroupWifi = eventGroup;
         me->eventGroupMQTT = xEventGroupCreate();

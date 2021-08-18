@@ -3,7 +3,8 @@
 #include "esp_spi_flash.h"
 #include "freertos/FreeRTOS.h"
 
-void printChipInfo() {
+void printChipInfo( void ) 
+{
     esp_chip_info_t chip_info;
     esp_chip_info(&chip_info);
     printf("Chip Information:\n"
@@ -13,6 +14,6 @@ void printChipInfo() {
         , chip_info.cores, chip_info.revision, (spi_flash_get_chip_size() / (1024 * 1024)), (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
 }
 
-void printResetInfo() {
+void printResetInfo( void) {
    //TBD
 }
