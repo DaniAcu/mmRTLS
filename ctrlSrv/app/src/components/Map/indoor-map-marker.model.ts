@@ -5,6 +5,7 @@ export class IndoorMapMarker implements IIndoorMapMarkerEntity {
     
     constructor(
         private leafletMarker: Marker,
+        public destroy: () => void,
         public type: number,
         public id: string | number,
         public name: string,
@@ -17,11 +18,6 @@ export class IndoorMapMarker implements IIndoorMapMarkerEntity {
         this.x = x;
         this.y = y;
         this.leafletMarker.setLatLng([y, x]);
-    }
-
-    public destroy(): void {
-        this.leafletMarker.off();
-        this.leafletMarker.remove();
     }
         
 }

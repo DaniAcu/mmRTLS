@@ -25,9 +25,7 @@ import type { IIndoorPosition } from "src/interfaces/position.interface";
   };
 
   $: {
-    if (map && mapSize.x && mapSize.y) {
-      map.setBounds(mapSize);
-    }
+      map?.setBounds(mapSize);
   }
 
   let mapNode: HTMLDivElement;
