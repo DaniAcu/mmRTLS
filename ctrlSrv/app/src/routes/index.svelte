@@ -19,13 +19,7 @@
     goto(UPLOAD_MAP_ROUTE);
   }
 
-  const backgroundImage = (mapBackgroundImage as Observable<string>).pipe(
-    tap(image => {
-      if (!image) {
-        navigateToMapSetup();
-      }
-    }),
-    filter(image => !!image),
+  const backgroundImage = mapBackgroundImage.pipe(
     take(1)
   );
 
