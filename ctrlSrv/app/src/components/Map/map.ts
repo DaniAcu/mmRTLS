@@ -1,4 +1,4 @@
-import type { IIndoorMap } from 'src/interfaces/indoor-map.interface';
+import type { IConfigurableIndoorMap } from 'src/interfaces/indoor-map.interface';
 import type { MarkerIconSizeOptions } from 'src/interfaces/marker-icon.interface';
 import { IndoorMap } from './indoor-map.model';
 interface MapConfig {
@@ -8,7 +8,7 @@ interface MapConfig {
 }
 
 /**Loads leaflet and the default background image in parallel */
-export async function createMap({ imageOverlay, target, defaultIconConfig }: MapConfig): Promise<IIndoorMap<never>> {
+export async function createMap({ imageOverlay, target, defaultIconConfig }: MapConfig): Promise<IConfigurableIndoorMap<never>> {
   return Promise.all([
 		import('leaflet'),
 		loadImage(imageOverlay)

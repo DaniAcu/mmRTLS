@@ -7,14 +7,13 @@ import type { IIndoorPosition } from "src/interfaces/position.interface";
   import { createMap, loadImage } from "./map";
   import MapContext from "./map-context";
   
-  let map: IIndoorMap<any>;
+  let map: IConfigurableIndoorMap<any>;
   export let backgroundImage = './static/indoor-map.png';
   $: {
     if (map && backgroundImage) {
-      const configurableMap = map as IConfigurableIndoorMap<any>;
       loadImage(backgroundImage).then((image) => {
-        configurableMap.updateBackgroundImage(image);
-        configurableMap.setBounds(mapSize);
+        map.updateBackgroundImage(image);
+        map.setBounds(mapSize);
       });
     }
   }
