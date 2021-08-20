@@ -8,6 +8,7 @@ const generateIcon = (leaflet: typeof Leaflet, {iconUrl, size, origin}: MarkerIc
     iconSize: [size, size],
     iconAnchor: origin
 })
+
 export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
 
     private readonly leafletMap: Leaflet.Map;
@@ -38,7 +39,8 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
         this.updateExistingMarkersIconsSizes(iconSize, origin);
     }
 
-    public addMarker({x, y, id, icon}: T): void {
+    public addMarker(marker: T): void {
+        const { x, y, id, icon, onClick } = marker;
         const newMarker = new this.leaflet.Marker({
             lat: x,
             lng: y
@@ -48,6 +50,9 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             iconUrl: icon || this.leaflet.Icon.Default.imagePath!
         }
+
+        newMarker.on('click', () => onClick?.(marker));
+
         newMarker.setIcon(generateIcon(this.leaflet, iconConfig));
         this.markersMap.set(id, newMarker);
         this.leafletMap.addLayer(newMarker);

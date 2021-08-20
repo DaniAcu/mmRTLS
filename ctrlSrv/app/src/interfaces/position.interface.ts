@@ -8,4 +8,5 @@ export interface IIndoorPosition {
 export interface IIndoorMapMarker extends IEntity, IIndoorPosition {
     icon?: string;
     type: number;
+    onClick?: (id: IIndoorMapMarker) => void;
 }

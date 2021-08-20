@@ -12,7 +12,7 @@ export const navDevices$:  Observable<Marker[]> =
   ).pipe(
     catchError(err => {
       console.error(err);
-      return of([] as NavDevice[])
+      return of([])
     }),
     map(navDevs => 
       navDevs
