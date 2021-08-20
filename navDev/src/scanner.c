@@ -56,6 +56,7 @@ void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
             }          
         }
         #endif
+	wtdFeed();
     }
 }
 

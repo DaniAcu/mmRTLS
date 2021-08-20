@@ -30,7 +30,6 @@
 #include "messageUnbundler.h"
 #include "utils.h"
 
-#include "wtd.h"
 
 static const char *TAG = "MQTTS_CLIENT";
 
@@ -131,7 +130,6 @@ static void mqttClientTask( void *pvParameter )
     utilsMAC2str( thisMAC, thisMACStr, sizeof(thisMACStr) ); 
     mqttClientInitClient( me );
     printf("mqtt_ClientTask Started, waiting for messages\n");   
-    wtdSubscribeTask();
     for (;;) {
         if ( pdPASS == xQueueReceive( me->messageQueue, &rssiData, portMAX_DELAY ) ) {
             messageBundlerInsert( &UplinkPacket_Scan, &rssiData );
@@ -160,7 +158,6 @@ static void mqttClientTask( void *pvParameter )
             messageBundlerCleanup( &UplinkPacket_Scan );
             wifiHandlerScanMode( true ); /*re-enable the scanmode*/
         }
-        wtdFeed();
     }
 }
 /*====================================================================================*/

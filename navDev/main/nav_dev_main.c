@@ -28,7 +28,7 @@ void app_main() {
    //Boot Information
    printResetInfo();
    printChipInfo();
-   wtdInitTask(10);
+   wtdInitTask(11);
     //Initializations
    int32_t errorCode = initializeNVSRegistry();
    if (errorCode != ESP_OK) {
