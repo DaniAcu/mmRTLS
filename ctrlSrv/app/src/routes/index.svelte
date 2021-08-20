@@ -34,7 +34,7 @@
   )
 </script>
 
-<div class="main-container">
+<div class="container">
   <Map backgroundImage={$backgroundImage} mapSize={$mapDimensions}>
     {#each $markers as {lat, lng, id, icon} (id)}
       <Marker x={lat} y={lng} {id} {icon}/>

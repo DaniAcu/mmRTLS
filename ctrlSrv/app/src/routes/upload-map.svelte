@@ -81,9 +81,9 @@ import type { IndoorMapEvents } from "src/interfaces/indoor-map.interface";
   });
 </script>
 
-<div class="main-container vertical-container">
+<div class="container vertical-container">
   <section class="vertical-container">
-    <p>
+    <p class="hint">
       Upload a Map if you wish to use your own.
     </p>
     <Button variant="raised" on:click={openUploadWindow}>
@@ -98,14 +98,14 @@ import type { IndoorMapEvents } from "src/interfaces/indoor-map.interface";
     </Map>
   </div>
   <section class="controls-group vertical-container">
-    <p class="hint">
+    <p>
       Set the map dimensions in meters.
     </p>
     <div class="controls">
       <TextField label="X Dimension (Meters)" bind:value={xDimension}/>
       <TextField label="Y Dimension (Meters)" bind:value={yDimension}/>
     </div>
-    <p class="hint">
+    <p>
       You can test the dimensions set by changing the coordinates of these two points.
     </p>
     <div class="controls point-coordinates">
@@ -135,12 +135,18 @@ import type { IndoorMapEvents } from "src/interfaces/indoor-map.interface";
   }
   .map-wrapper {
     width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
   }
   .controls {
     display: flex;
   }
   section {
     margin: 2em 0;
+  }
+
+  .hint {
+    margin-bottom: 1em;
   }
 </style>
   

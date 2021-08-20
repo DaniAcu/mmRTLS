@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ICartesianMapMarker, IIndoorMapMarkerEntity } from "src/interfaces/position.interface";
+    import type { IIndoorMapMarker, IIndoorMapMarkerEntity } from "src/interfaces/position.interface";
 
     import { onDestroy, onMount } from "svelte";
     import MapContext from "./map-context";
@@ -11,7 +11,7 @@
         name,
         icon,
         type
-    }: ICartesianMapMarker = {
+    }: IIndoorMapMarker = {
         x: NaN,
         y: NaN,
         name: '',
