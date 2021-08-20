@@ -18,6 +18,8 @@
 
 #include "ieee80211_structs.h"
 
+#include "wtd.h"
+
 //Global Data
 static const char *TAG = "scanner";
 static wifi_handler_data_t wifi_data ;
@@ -86,7 +88,7 @@ void scannerTask(void *pvParameter)
     
     ESP_LOGI( TAG, "Wifi module ready");
     wifiHandlerScanMode(true);
-  
+    wtdSubscribeTask();
     for (;;) {      
         xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_SCAN_START | WIFI_DISCONNECTED , false, true, portMAX_DELAY);
     
@@ -99,6 +101,7 @@ void scannerTask(void *pvParameter)
             wifihandlerSetChannel(channel);
         } 
         vTaskDelay(params->timeBetweenChannels / portTICK_RATE_MS);    
+        wtdFeed();
     }
 }
 

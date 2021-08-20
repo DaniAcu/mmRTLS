@@ -12,6 +12,8 @@
 
 #include "sntpUpdate.h"
 
+#include "wtd.h"
+
 TaskHandle_t sntpUpdateTaskHandle;
 static const char *TAG = "SNTP";
 
@@ -63,6 +65,7 @@ static void sntpUpdateTask( void *pvParameter )
 
     sntpUpdateRequestSync(); /*request for the first time*/
     ESP_LOGI(TAG, "Starting the NTP time sync service.");
+    wtdSubscribeTask();
     for (;;) {
         xTaskNotifyWait( 0x00, ULONG_MAX, NULL, portMAX_DELAY ); 
         ESP_LOGI(TAG, "NTP Syncronization requested. Waiting for connectivity...");
@@ -78,6 +81,7 @@ static void sntpUpdateTask( void *pvParameter )
             ESP_LOGI(TAG, "The current UTC date/time is: %s", strftime_buf);
             sntp_stop();
         }
+        wtdFeed();
     }
 }
 /*====================================================================================*/

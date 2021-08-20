@@ -21,12 +21,14 @@
 
 #include "wifiConfig.h"
 
+#include "wtd.h"
+
 void app_main() {
    
    //Boot Information
    printResetInfo();
    printChipInfo();
-
+   wtdInitTask(10);
     //Initializations
    int32_t errorCode = initializeNVSRegistry();
    if (errorCode != ESP_OK) {

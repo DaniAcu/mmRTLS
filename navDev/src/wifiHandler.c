@@ -15,6 +15,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "wtd.h"
+
 static const char *TAG = "wifiHandler";
 static wifi_handler_data_t wifi_data;
 static uint8_t lastChannel = 1u;
@@ -171,6 +173,7 @@ void wifiHandlerAPTask( void* taskParmPtr )
     xEventGroupSetBits(wifi_data.eventGroup, WIFI_DISCONNECTED);
     
     ESP_LOGI( TAG, "Ready, Waiting connection mode...");
+    wtdSubscribeTask();
     for (;;) {
         xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_DISCONNECTED | WIFI_CONNECTED | WIFI_SCAN_START | WIFI_SCAN_STOP, false, false, portMAX_DELAY);
        
@@ -196,6 +199,7 @@ void wifiHandlerAPTask( void* taskParmPtr )
         }
 
         vTaskDelay(1000 / portTICK_RATE_MS);
+        wtdFeed();
     }
 }
 
