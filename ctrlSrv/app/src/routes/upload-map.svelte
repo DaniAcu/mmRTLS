@@ -12,6 +12,7 @@
   import Marker from "../components/Map/Marker.svelte";
   import { BEACON_ICON_URL } from "../streams/beacons";
   import type { IIndoorPosition } from "src/interfaces/position.interface";
+import type { IndoorMapEvents } from "src/interfaces/indoor-map.interface";
 
   let fileUploader: FileUploader;
 
@@ -23,7 +24,7 @@
 
   const unsubscribe = new Subject<void>();
   let imageUrl: Observable<string> = NEVER;
-  let currentImageUrl: string | null = mapBackgroundImage.value;
+  let currentImageUrl: string = mapBackgroundImage.value;
   let mapSize: IIndoorPosition;
 
   let xDimension: string | null = mapMaxPosition.value?.x.toString() ?? null;
@@ -51,6 +52,12 @@
         currentImageUrl = image;
       })
     );
+  };
+
+  const handleMapUpdate = (event: CustomEvent<IndoorMapEvents['mapUpdate']>) => {
+    const { x, y } = event.detail;
+    xDimension = x.toString();
+    yDimension = y.toString();
   };
 
   const saveMap = () => {
@@ -85,7 +92,7 @@
   </section>
   <!-- svelte-ignore a11y-missing-attribute -->
   <div class="map-wrapper">
-    <Map backgroundImage={$imageUrl} {mapSize}>
+    <Map backgroundImage={$imageUrl} {mapSize} on:mapUpdate={handleMapUpdate}>
       <Marker x={+point1X} y={+point1Y} id={1} icon={BEACON_ICON_URL}></Marker>
       <Marker x={+point2X} y={+point2Y} id={2} icon={BEACON_ICON_URL}></Marker>
     </Map>

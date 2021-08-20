@@ -14,5 +14,11 @@ export interface IIndoorMapActions {
 export type IIndoorMap<T extends IIndoorMapMarker> = IIndoorMapMarkersInteractions<T> & IIndoorMapActions;
 
 export interface IConfigurableIndoorMap<T extends IIndoorMapMarker> extends IIndoorMap<T> {
-    updateBackgroundImage: (backgroundImage: HTMLImageElement) => void;
+    updateBackgroundImage(backgroundImage: HTMLImageElement): IIndoorPosition;
+    updateBackgroundImage(backgroundImage: string): Promise<IIndoorPosition>;
+    updateBackgroundImage(backgroundImage: string | HTMLImageElement): Promise<IIndoorPosition> | IIndoorPosition;
+}
+
+export interface IndoorMapEvents {
+    mapUpdate: IIndoorPosition;
 }

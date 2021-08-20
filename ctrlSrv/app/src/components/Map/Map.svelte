@@ -1,30 +1,45 @@
 <script lang="ts">
 import type { IIndoorPosition } from "src/interfaces/position.interface";
+import { isSamePosition } from "../../utils/position-helpers.function";
 
-  import { onDestroy, onMount } from "svelte";
-  import type { IConfigurableIndoorMap, IIndoorMap } from '../../interfaces/indoor-map.interface';
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
+  import type { IConfigurableIndoorMap, IndoorMapEvents } from '../../interfaces/indoor-map.interface';
   import type { IndoorMap } from "./indoor-map.model";
-  import { createMap, loadImage } from "./map";
+  import { createMap } from "./map";
   import MapContext from "./map-context";
+
+  const dispatch = createEventDispatcher<IndoorMapEvents>();
+
+  const notifyMapUpdate = (newDimentions: IIndoorPosition) => {
+    dispatch('mapUpdate', newDimentions);
+  };
   
   let map: IConfigurableIndoorMap<any>;
   export let backgroundImage = './static/indoor-map.png';
   $: {
-    if (map && backgroundImage) {
-      loadImage(backgroundImage).then((image) => {
-        map.updateBackgroundImage(image);
-        map.setBounds(mapSize);
-      });
-    }
+    map?.updateBackgroundImage(backgroundImage).then((newSize) => {
+      updateMapBounds(newSize);
+    });
   }
 
   export let mapSize: IIndoorPosition = {
     x: NaN,
     y: NaN
   };
+  let internalMapSize: IIndoorPosition = mapSize;
 
   $: {
-      map?.setBounds(mapSize);
+    updateMapBounds(mapSize);
+  }
+
+  const updateMapBounds = (newBounds: IIndoorPosition) => {
+    if (isSamePosition(internalMapSize, newBounds)) {
+      return;
+    }
+    map?.setBounds(newBounds);
+    internalMapSize = newBounds;
+    mapSize = newBounds;
+    notifyMapUpdate(newBounds);
   }
 
   let mapNode: HTMLDivElement;

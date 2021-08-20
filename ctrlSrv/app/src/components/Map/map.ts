@@ -1,5 +1,6 @@
 import type { IConfigurableIndoorMap } from 'src/interfaces/indoor-map.interface';
 import type { MarkerIconSizeOptions } from 'src/interfaces/marker-icon.interface';
+import { loadImage } from '../../utils/load-image.function';
 import { IndoorMap } from './indoor-map.model';
 interface MapConfig {
   imageOverlay: string;
@@ -14,26 +15,4 @@ export async function createMap({ imageOverlay, target, defaultIconConfig }: Map
 		loadImage(imageOverlay)
 	]).then(
     ([{ default: L }, mapImage ]) => new IndoorMap(L, target, mapImage, defaultIconConfig))
-}
-
-export function loadImage(src: string): Promise<HTMLImageElement> {
-	return new Promise((resolve) => {
-		const image = new Image(0, 0);
-		image.src = src;
-		image.hidden = true;
-
-		image.addEventListener("load", () => {
-			resolve(image);
-		});
-
-		image.addEventListener('error', () => {
-			image.width = 1;
-			image.height = 1;
-			resolve(image);
-		})
-
-
-		document.body.appendChild(image);
-		document.body.removeChild(image);
-	});
 }

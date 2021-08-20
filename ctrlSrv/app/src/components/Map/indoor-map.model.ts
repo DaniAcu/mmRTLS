@@ -3,6 +3,7 @@ import type { IIndoorMapMarker, IIndoorMapMarkerEntity, IIndoorPosition } from "
 import type * as Leaflet from 'leaflet';
 import type { MarkerIconOptions, MarkerIconSizeOptions } from "src/interfaces/marker-icon.interface";
 import { IndoorMapMarker } from "./indoor-map-marker.model";
+import { loadImage } from "../../utils/load-image.function";
 
 const generateIcon = (leaflet: typeof Leaflet, {iconUrl, size, origin}: MarkerIconOptions) => leaflet.icon({
     iconUrl: iconUrl,
@@ -18,6 +19,10 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoo
     }> = new Map();
 
     private imageOverlay!: Leaflet.ImageOverlay;
+    private currentBounds: IIndoorPosition = {
+        x: 100,
+        y: 100
+    };
 
     constructor(
         private readonly leaflet: typeof Leaflet,
@@ -90,29 +95,45 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoo
             maxPos = [minMaxY, minMaxX];
         }
         const bounds = this.leaflet.latLngBounds([minPos, maxPos]);
+        this.currentBounds = {
+            x: minMaxX,
+            y: minMaxY
+        };
         this.imageOverlay.setBounds(bounds);
         this.leafletMap.fitBounds(bounds);
     }
 
-    public updateBackgroundImage(imageElement: HTMLImageElement, fitBoundsToImageSize = true): void {
-        const imageUrl = imageElement.src;
-        const imageOverlayElement = this.imageOverlay.getElement();
-        if (imageOverlayElement) {
-            imageOverlayElement.src = imageUrl;
+    public getBounds(): IIndoorPosition {
+        return this.currentBounds;
+    }
+
+    public updateBackgroundImage(newImage: HTMLImageElement): IIndoorPosition;
+    public async updateBackgroundImage(backgroundImage: string): Promise<IIndoorPosition>;
+    public updateBackgroundImage(newImage: HTMLImageElement | string): Promise<IIndoorPosition> | IIndoorPosition {
+        if (typeof newImage === 'string') {
+            return loadImage(newImage).then(image => this.processBackgroundImage(image));
         }
-        const bounds: Leaflet.LatLngBoundsExpression = [
-            [0, 0],
-            [imageElement.naturalHeight, imageElement.naturalWidth]
-        ];
-        this.imageOverlay.setBounds(this.leaflet.latLngBounds(bounds));
-        if (fitBoundsToImageSize) {
-            this.leafletMap.fitBounds(bounds);
-        }
+        return this.processBackgroundImage(newImage);
     }
 
     public destroy(): void {
         this.leafletMap.off();
         this.leafletMap.remove();
+    }
+
+    private processBackgroundImage(image: HTMLImageElement): IIndoorPosition {
+        const imageUrl = image.src;
+        const imageOverlayElement = this.imageOverlay.getElement();
+        if (imageUrl && imageOverlayElement) {
+            imageOverlayElement.src = imageUrl;
+            const newImageAspectRatio = imageOverlayElement.naturalWidth / imageOverlayElement.naturalHeight;
+            const newHeight = this.currentBounds.x / newImageAspectRatio;
+            this.setBounds({
+                ...this.currentBounds,
+                y: newHeight
+            });
+        }
+        return this.getBounds();
     }
 
     private createBackgroundOverlay() {
