@@ -1,24 +1,23 @@
 <script lang="ts">
   import Marker from "../components/Map/Marker.svelte";
   import Map from "../components/Map/Map.svelte";
-  import { onMount$ } from "../utils/lifecycles"
+  import { onMount$, onDestroy$ } from "../utils/lifecycles"
   import { getMarkers } from "../streams/markers";
-  import { beaconsMarkerSubject, getBeaconsMarkerClicked } from "../streams/beacons-interaction";
+  import { markerSubject, getBeaconClicked, getNavDeviceClicked } from "../streams/markers-interactions";
   import type { IIndoorMapMarker } from "../interfaces/position.interface";
-  import { startWith } from "rxjs/operators";
+  import BeaconDetails from "../views/BreaconDetails/BeaconDetails.svelte";
+  import NavDeviceDetails from "../views/NavDeviceDetails/NavDeviceDetails.svelte";
+    
 
-  const markers$ = onMount$.pipe(
-    getMarkers,
-    startWith([])
-  );
+  const markers$ = onMount$.pipe(getMarkers);
 
-  const beaconsMarkerClicked$ = getBeaconsMarkerClicked(markers$)
+  const beaconsMarkerClicked$ = getBeaconClicked(markers$);
+  const navDeviceMarkerClicked$ = getNavDeviceClicked(markers$);
 
   const onMarkerClick = ({ id }: IIndoorMapMarker) => {
-    console.log("id", id);
-    beaconsMarkerSubject.next(id);
+    markerSubject.next(id);
   }
-
+  
 </script>
 
 <div class="container">
@@ -27,9 +26,9 @@
       <Marker x={lat} y={lng} id={id} icon={icon} onClick={onMarkerClick}/>
     {/each}
   </Map>
+  <BeaconDetails beacon={$beaconsMarkerClicked$}/>
+  <NavDeviceDetails navDevice={$navDeviceMarkerClicked$}/>
 </div>
-
-<span>beaconsMarkerSubject {$beaconsMarkerClicked$}</span>
 
 <style>
   .container {

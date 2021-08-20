@@ -3,7 +3,9 @@ import type { NavDevice } from 'src/interfaces/nav-device.interface';
 import { catchError, map, Observable, of } from "rxjs";
 import { fromFetch } from "rxjs/fetch";
 
-export const navDevices$:  Observable<Marker[]> = 
+export type NavDeviceInfo = Omit<NavDevice, "navId" | "positions">;
+
+export const navDevices$:  Observable<Marker<NavDeviceInfo>[]> = 
   fromFetch(
     generateGetNavDeviceURL("http://localhost:3000/nav-devs"), 
     {
@@ -50,12 +52,13 @@ function generateGetNavDeviceURL(path: string) {
   return url.toString();
 }
 
-function fromNavDeviceToMarker(navDevice: NavDevice): Marker {
+function fromNavDeviceToMarker({ navId, positions, ...navDevice }: NavDevice): Marker<NavDeviceInfo> {
   return {
-    id: `navDevice-${navDevice.navId}`,
+    id: `navDevice-${navId}`,
     type: MarkerType.NAVDEV,
     icon: './static/markers/location.png',
-    lat: navDevice.positions[0].x,
-    lng: navDevice.positions[0].y
+    lat: positions[0].x,
+    lng: positions[0].y,
+    data: navDevice
   }
 }

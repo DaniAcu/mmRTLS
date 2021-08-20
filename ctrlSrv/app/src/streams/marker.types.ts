@@ -3,10 +3,11 @@ export enum MarkerType {
   NAVDEV = "NAVDEV"
 }
 
-export interface Marker {
+export interface Marker<T> {
   id: string | number;
   type: MarkerType;
   icon?: string;
   lat: number;
   lng: number;
+  data: T;
 }

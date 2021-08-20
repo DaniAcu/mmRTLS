@@ -1,20 +1,24 @@
-import { map, Observable, startWith, Subject, timer, zip } from 'rxjs';
+import { map, Observable, startWith, BehaviorSubject, timer, zip } from 'rxjs';
 import { beacons$ } from './beacons';
 import { navDevices$ } from './navdev';
 import type { Marker } from './marker.types'
 import { poll } from '../utils/operators';
+import type { BeaconInfo } from './beacons';
+import type { NavDeviceInfo } from './navdev';
 
-const markersSubject = new Subject<Marker[]>();
+export type MarkerInfo = BeaconInfo | NavDeviceInfo;
+
+const markersSubject = new BehaviorSubject<Marker<MarkerInfo>[]>([]);
 
 zip(
   beacons$,
   navDevices$
 ).pipe( 
-  poll(10000),// Polling interval is 10 seconds
+  poll(10000), // Polling interval is 10 seconds
   map(x => x.flat())
 ).subscribe(markers => {
   markersSubject.next(markers);
 })
     
-export const getMarkers = (): Observable<Marker[]> => 
-  markersSubject.asObservable().pipe(startWith([]));
+export const getMarkers = (): Observable<Marker<MarkerInfo>[]> => 
+  markersSubject.asObservable();
