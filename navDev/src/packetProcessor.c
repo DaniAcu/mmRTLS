@@ -9,31 +9,32 @@
 
 static const char *TAG = "packetProcessor";
 
-typedef enum {
+typedef enum 
+{
     KNOWN_LIST_EMPTY = -2,
     KNOWN_LIST_NOT_FOUND = -1, 
-}KnownListStatus_t;
+} KnownListStatus_t;
 
-static uint8_t knownNodes[ MAXKNOWN_NODES_LIST_SIZE ]= {0};
-static bool knownChannels[ WIFI_CHANNEL_MAX ] = { 0 };
+static uint8_t knownNodes[ CONFIG_PROCESSOR_MAXKNOWN_NODES*MAC_ADDR_LENGTH  ]= { 0 };
+static bool knownChannels[ CONFIG_WIFI_CHANNEL_MAX ] = { 0 };
 
 static int processCheckIfKnown( uint8_t *mac );
 
 /*============================================================================*/
-rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload) 
+rssiData_t processWifiPacket( const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *payload ) 
 {
 
-#if CONFIG_IDF_TARGET_ESP32
-    int len = crtPkt->sig_len;  // ESP32
-#else 
-    int len = crtPkt->sig_mode ? crtPkt->HT_length : crtPkt->legacy_length;  // ESP8266
-#endif
+    #if CONFIG_IDF_TARGET_ESP32
+        int len = crtPkt->sig_len;
+    #else 
+        int len = crtPkt->sig_mode ? crtPkt->HT_length : crtPkt->legacy_length;
+    #endif
 
     struct timeval tp;
     KnownListStatus_t ismacknonw = KNOWN_LIST_NOT_FOUND;
     rssiData_t rssiData = { };
 
-    if (len < sizeof(wifi_ieee80211_mac_hdr_t)) {
+    if ( len < sizeof(wifi_ieee80211_mac_hdr_t) ) {
         rssiData.isValid = false;
         return rssiData;
     }
@@ -54,9 +55,9 @@ rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *pa
         knownChannels[ rssiData.channel ] = true;
     }
     else if ( KNOWN_LIST_EMPTY != ismacknonw ) {
-        char macstr[18] = {0};
+        char macstr[ 18 ] = { 0 };
         utilsMAC2str( rssiData.mac, macstr, sizeof(macstr)  );
-        ESP_LOGI( TAG, "%s ignored (not on the known list)", macstr );
+        ESP_LOGI( TAG, "%s ignored", macstr );
     } 
 
     return rssiData;
@@ -65,14 +66,14 @@ rssiData_t processWifiPacket(const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *pa
 static KnownListStatus_t processCheckIfKnown( uint8_t *mac )
 {
     int i;
-    uint8_t nullentry[6] = { 0 };
+    uint8_t nullentry[MAC_ADDR_LENGTH] = { 0 };
     uint8_t *iEntry;
-    for( i = 0; i < CONFIG_PROCESSOR_MAXKNOWN_NODES; ++i) {
-        iEntry = &knownNodes[ i*6 ]; /*get mac entry from the list*/
-        if ( 0 == memcmp( iEntry, nullentry, 6 ) ) { /*we reach the end of the list?*/
+    for( i = 0; i < CONFIG_PROCESSOR_MAXKNOWN_NODES; ++i ) {
+        iEntry = &knownNodes[ i*MAC_ADDR_LENGTH ]; /*get mac entry from the list*/
+        if ( 0 == memcmp( iEntry, nullentry, MAC_ADDR_LENGTH ) ) { /*we reach the end of the list?*/
             return (i == 0)? KNOWN_LIST_EMPTY : KNOWN_LIST_NOT_FOUND;
         }
-        if ( 0 == memcmp( iEntry, mac, 6 ) ) { 
+        if ( 0 == memcmp( iEntry, mac, MAC_ADDR_LENGTH ) ) { 
             return i;
         }
   }
@@ -89,9 +90,11 @@ int processKnownListStore( uint8_t *list )
     int32_t ret = ESP_ERR_NOT_FOUND;
 
     ESP_LOGI( TAG, "Saving Known nodes list..." );
+    
     #if ( CONFIG_PROCESSOR_PERSISTENT_KNOWN_NODES == 1 )
-    ret = setDataBlockRawToNvs( "knownlist" , list, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+        ret = setDataBlockRawToNvs( "knownlist" , list, sizeof(knownNodes) );
     #endif
+
     if( ESP_OK == ret ) {
         ESP_LOGI( TAG, "Known nodes list saved!" );
     }
@@ -104,14 +107,16 @@ int processKnownListStore( uint8_t *list )
 int processKnownListLoad( void )
 {
     int32_t ret = ESP_ERR_NOT_FOUND;
+    
     #if ( CONFIG_PROCESSOR_PERSISTENT_KNOWN_NODES == 1 )
-    ret = getDataBlockRawFromNvs( "knownlist", knownNodes, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+        ret = getDataBlockRawFromNvs( "knownlist", knownNodes, sizeof(knownNodes) );
     #endif
+    
     if( ESP_OK == ret ){
         uint32_t emptycheck = NVS_EMPTY_DWORD;
         if( 0 == memcmp( knownNodes, &emptycheck, sizeof(emptycheck) ) ) {
             ESP_LOGI( TAG, "knownlist area  empty, start with an empty list" );
-            memset( knownNodes, 0x00, MAXKNOWN_NODES_LIST_SIZE*sizeof(uint8_t) );
+            memset( knownNodes, 0x00, sizeof(knownNodes) );
         }
         ESP_LOGI( TAG, "Known nodes list loaded!" );
     }
@@ -120,4 +125,4 @@ int processKnownListLoad( void )
     }
     return ret;
 }
-    
+/*============================================================================*/   
