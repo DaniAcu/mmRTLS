@@ -17,5 +17,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif 
+
 #endif/*SNTP_UPDATE_H*/
 

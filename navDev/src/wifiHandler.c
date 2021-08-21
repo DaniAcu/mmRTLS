@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 #include "wtd.h"
+#include "ledstatus.h"
 
 static const char *TAG = "wifiHandler";
 static wifi_handler_data_t wifi_data;
@@ -48,6 +49,7 @@ static void wifiEventhandler( void* arg, esp_event_base_t event_base, int32_t ev
             xEventGroupSetBits( wifi_data.eventGroup, WIFI_DISCONNECTED | WIFI_SCAN_STOP );
             xEventGroupClearBits( wifi_data.eventGroup, WIFI_CONNECTED | WIFI_CONNECTING );
             wifihandlerSetChannel( wifiHandlerGetSavedChannel() );
+            ledStatusSetBlinkSpeed( 500 );
         }
         else if ( WIFI_EVENT_STA_START == event_id ) {
             xEventGroupSetBits( wifi_data.eventGroup, WIFI_READY );
@@ -59,6 +61,7 @@ static void wifiEventhandler( void* arg, esp_event_base_t event_base, int32_t ev
             ESP_LOGI( TAG, "got ip:" IPSTR, IP2STR( &event->ip_info.ip ) );
             xEventGroupSetBits( wifi_data.eventGroup, WIFI_CONNECTED);
             xEventGroupClearBits( wifi_data.eventGroup, WIFI_DISCONNECTED | WIFI_CONNECTING );
+            ledStatusSetBlinkSpeed( 100 );
         }
     }
 }
@@ -263,7 +266,7 @@ int wifiHandlerSetBestAPbyList( void )
         ESP_LOGI( TAG, "Connecting to the default AP..." );
     }
 
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+    ESP_ERROR_CHECK( esp_wifi_set_config( WIFI_IF_STA, &wifi_config ) );
 
     return retVal;
 }

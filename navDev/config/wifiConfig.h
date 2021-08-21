@@ -15,6 +15,7 @@ extern "C" {
     #define CONFIG_WIFI_USE_ROAMING             ( 1 )
     #define CONFIG_WIFI_PERSISTENT_CREDENTIALS  ( 1 )
     #define CONFIG_WIFI_RETRY_MAX               ( 5 )
+    #define CONFIG_LED_STATUS_PIN               ( 5 )
 
     //#define CONFIG_WIFI_DEFAULT_SSID            "DEFAULT_AP_SSID"
     //#define CONFIG_WIFI_DEFAULT_PASS            "DEFAULT_AP_PASS"

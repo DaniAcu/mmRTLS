@@ -22,6 +22,7 @@
 #include "wifiConfig.h"
 
 #include "wtd.h"
+#include "ledstatus.h"
 
 void app_main() {
    printResetInfo();
@@ -40,4 +41,6 @@ void app_main() {
    wifiScannerStart( CONFIG_WIFI_CHANNEL_MAX, CONFIG_WIFI_SCAN_TIME_MS_BTW_CH, rssiMessageQueue, wifiHandlerGetEventGroup());
    mqttClientStart( rssiMessageQueue, wifiHandlerGetEventGroup() );
    sntpUpdateStart( wifiHandlerGetEventGroup() );
+   ledStatusInit( CONFIG_LED_STATUS_PIN );
+
 }
