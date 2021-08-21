@@ -1,18 +1,13 @@
 #include "wtd.h"
 
-#define CHECK_ERROR_CODE(returned, expected) ({                        \
-            if(returned != expected){                                  \
-                printf("TWDT ERROR\n");                                \
-            }                                                          \
-})
 
-#define TWDT_TIMEOUT_S          3
+#define TWDT_DEFAULT_TIMEOUT_S          ( 11u )
 
-
-void wtdInitTask(uint8_t time)
+/*============================================================================*/
+void wtdInitTask( uint32_t xTime )
 {
     #if CONFIG_IDF_TARGET_ESP32
-        CHECK_ERROR_CODE(esp_task_wdt_init(time, false), ESP_OK);
+        ESP_ERROR_CHECK(esp_task_wdt_init( xTime, false ) );
         #ifndef CONFIG_ESP_TASK_WDT_CHECK_IDLE_TASK_CPU0
             esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(0));
         #endif
@@ -20,21 +15,21 @@ void wtdInitTask(uint8_t time)
             esp_task_wdt_add(xTaskGetIdleTaskHandleForCPU(1));
         #endif
     #else
-        CHECK_ERROR_CODE(esp_task_wdt_init(), ESP_OK);
-        (void)time;
+        ESP_ERROR_CHECK(esp_task_wdt_init());
+        (void)xTime;
     #endif
 }
-
-
-void wtdSubscribeTask(void)
+/*============================================================================*/
+void wtdSubscribeTask( void )
 {
     #if CONFIG_IDF_TARGET_ESP32
-        CHECK_ERROR_CODE(esp_task_wdt_add(NULL), ESP_OK);
-        CHECK_ERROR_CODE(esp_task_wdt_status(NULL), ESP_OK);
+        ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+        ESP_ERROR_CHECK(esp_task_wdt_status(NULL));
     #endif
 }
-
-void wtdFeed(void)
+/*============================================================================*/
+void wtdFeed( void )
 {
     esp_task_wdt_reset();
 }
+/*============================================================================*/

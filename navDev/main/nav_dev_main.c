@@ -24,24 +24,20 @@
 #include "wtd.h"
 
 void app_main() {
-   
-   //Boot Information
    printResetInfo();
    printChipInfo();
-   wtdInitTask(11);
+   wtdInitTask( 11 );
     //Initializations
    int32_t errorCode = initializeNVSRegistry();
-   if (errorCode != ESP_OK) {
-      printf("NVS Registry Error: %d", errorCode);
+   if ( ESP_OK != errorCode ) {
+      ESP_LOGE( "main", "NVS Registry Error: %d", errorCode );
    }
 
-   //Read Mode from configuration
-   //TBD
-   QueueHandle_t rssiMessageQueue = createRSSIDataMessageQueue(WIFI_RSSIDATA_QUEUE_SIZE);
+   QueueHandle_t rssiMessageQueue = createRSSIDataMessageQueue( CONFIG_WIFI_RSSIDATA_QUEUE_SIZE );
    
    //Start Tasks
-   wifiHandlerStart(WIFI_CHANNEL_MAX, wifiScannerPacketHandler);
-   wifiScannerStart(WIFI_CHANNEL_MAX, WIFI_SCAN_TIME_MS_BTW_CH, rssiMessageQueue, wifiHandlerGetEventGroup());
+   wifiHandlerStart( CONFIG_WIFI_CHANNEL_MAX, wifiScannerPacketHandler);
+   wifiScannerStart( CONFIG_WIFI_CHANNEL_MAX, CONFIG_WIFI_SCAN_TIME_MS_BTW_CH, rssiMessageQueue, wifiHandlerGetEventGroup());
    mqttClientStart( rssiMessageQueue, wifiHandlerGetEventGroup() );
    sntpUpdateStart( wifiHandlerGetEventGroup() );
 }

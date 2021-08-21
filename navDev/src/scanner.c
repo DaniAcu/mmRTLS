@@ -18,49 +18,47 @@
 
 #include "ieee80211_structs.h"
 
-#include "wtd.h"
-
-//Global Data
 static const char *TAG = "scanner";
 static wifi_handler_data_t wifi_data ;
 QueueHandle_t scannerMessageQueue;
 
-
-typedef struct scannerParams {
+typedef struct 
+{
     uint8_t  channels;
     uint16_t timeBetweenChannels;
 } scannerParams;
 
-#if ( WIFI_USE_ROAMING == 1 )
-static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst );
+#if ( CONFIG_WIFI_USE_ROAMING == 1 )
+    static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst );
 #endif
-//-- Event Handlers start --
 
-void wifiScannerPacketHandler(void *buffer, wifi_promiscuous_pkt_type_t type)
+static void wifiScannerTask( void *pvParameter ); 
+
+/*============================================================================*/
+void wifiScannerPacketHandler( void *buffer, wifi_promiscuous_pkt_type_t type )
 {
-    #if ( WIFI_USE_ROAMING == 1 )
+    #if ( CONFIG_WIFI_USE_ROAMING == 1 )
     int index;
     #endif
     wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buffer; /* First layer: type cast the received buffer into our generic SDK structure*/
    
     if( WIFI_PKT_MGMT == type ) {
-        rssiData_t rssiData = processWifiPacket(&(pkt->rx_ctrl),  pkt->payload);
-        if (rssiData.isValid) {
+        rssiData_t rssiData = processWifiPacket( &(pkt->rx_ctrl),  pkt->payload );
+        if ( rssiData.isValid ) {
             xQueueSend( scannerMessageQueue, &rssiData, portMAX_DELAY );
         }
-        #if ( WIFI_USE_ROAMING == 1 )
+        #if ( CONFIG_WIFI_USE_ROAMING == 1 )
         if ( ( index = wifiHandlerGetAPIndexFromListbyMAC( rssiData.mac ) ) >= 0 ) { 
-            char ssid[ MAX_SSID_NAME_LENGTH ] = { 0 };
+            char ssid[ CONFIG_MAX_SSID_NAME_LENGTH ] = { 0 };
             if( NULL != wifiScannerGetSSIDFromPacket( pkt, ssid ) ){
                 wifiHandlerAPCredentialListInsertSSDI( index, ssid, rssiData.rssi );
             }          
         }
         #endif
-	wtdFeed();
     }
 }
-
-#if ( WIFI_USE_ROAMING == 1 )
+/*============================================================================*/
+#if ( CONFIG_WIFI_USE_ROAMING == 1 )
 static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *dst )
 {
     char *retVal = NULL;
@@ -69,45 +67,41 @@ static char* wifiScannerGetSSIDFromPacket( wifi_promiscuous_pkt_t* pkt, char *ds
     const wifi_header_frame_control_t *frame_ctrl = (wifi_header_frame_control_t *)&hdr->frame_ctrl;   /*Pointer to the frame control section within the packet header*/ 
 
     if ( ( WIFI_PKT_MGMT == frame_ctrl->type ) && ( BEACON == frame_ctrl->subtype ) ) {
-        const wifi_mgmt_beacon_t *beacon_frame = (wifi_mgmt_beacon_t*) ipkt->payload;  
+        const wifi_mgmt_beacon_t *beacon_frame = (wifi_mgmt_beacon_t*)ipkt->payload;  
         strncpy( dst, beacon_frame->ssid, (beacon_frame->tag_length >= 32 )? 31 : beacon_frame->tag_length );
         retVal = dst;
     }
     return retVal;
 }
 #endif
-
-//Task
-void scannerTask(void *pvParameter) 
+/*============================================================================*/
+static void wifiScannerTask( void *pvParameter ) 
 {
     EventBits_t xBits;
-    scannerParams *params = (scannerParams *) pvParameter;
+    scannerParams *params = (scannerParams *)pvParameter;
     uint8_t channel = params->channels;
   
     ESP_LOGI( TAG, "Started, Waiting wifi module to be ready" );
-    xEventGroupWaitBits(wifi_data.eventGroup, WIFI_READY, false, true, portMAX_DELAY);
+    xEventGroupWaitBits( wifi_data.eventGroup, WIFI_READY, false, true, portMAX_DELAY );
     
-    ESP_LOGI( TAG, "Wifi module ready");
-    wifiHandlerScanMode(true);
-    wtdSubscribeTask();
+    ESP_LOGI( TAG, "Wifi module ready" );
+    wifiHandlerScanMode( true );
     for (;;) {      
-        xBits = xEventGroupWaitBits(wifi_data.eventGroup,  WIFI_SCAN_START | WIFI_DISCONNECTED , false, true, portMAX_DELAY);
+        xBits = xEventGroupWaitBits( wifi_data.eventGroup,  WIFI_SCAN_START | WIFI_DISCONNECTED , false, true, portMAX_DELAY );
     
-        if (xBits & WIFI_SCAN_START) {
-            if (++channel >= params->channels) {
+        if ( xBits & WIFI_SCAN_START ) {
+            if ( ++channel >= params->channels ) {
                 channel = 1;       
             }
-            ESP_LOGI( TAG, "Scanning Channel %d of %d, %d mseg", channel, params->channels, params->timeBetweenChannels) ;
-            wifiHandlerSaveChannel(channel);
-            wifihandlerSetChannel(channel);
+            ESP_LOGI( TAG, "Scanning Channel %d of %d, %d mseg", channel, params->channels, params->timeBetweenChannels );
+            wifiHandlerSaveChannel( channel );
+            wifihandlerSetChannel( channel );
         } 
-        vTaskDelay(params->timeBetweenChannels / portTICK_RATE_MS);    
-        wtdFeed();
+        vTaskDelay( params->timeBetweenChannels/portTICK_RATE_MS );
     }
 }
-
-//Exposed API
-int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueHandle_t messageQueue, EventGroupHandle_t eventGroup)
+/*============================================================================*/
+int32_t wifiScannerStart( uint8_t nChannels, uint16_t timeBetweenChannels, QueueHandle_t messageQueue, EventGroupHandle_t eventGroup )
 {
     if ( NULL == eventGroup ) {
         ESP_LOGE( TAG, "wifiScannerStart: eventGroup can be null" );
@@ -115,8 +109,8 @@ int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueH
     }
 
     wifi_data.eventGroup = eventGroup;
-    if (nChannels >= WIFI_CHANNEL_MAX) {
-        nChannels = WIFI_CHANNEL_MAX;
+    if ( nChannels >= CONFIG_WIFI_CHANNEL_MAX ) {
+        nChannels = CONFIG_WIFI_CHANNEL_MAX;
     }
 
     static scannerParams params;
@@ -125,8 +119,8 @@ int32_t wifiScannerStart(uint8_t nChannels, uint16_t timeBetweenChannels, QueueH
     scannerMessageQueue = messageQueue;
 
     processKnownListLoad();
-    xTaskCreate(&scannerTask, "scannerTask", 2048, &params, 3, NULL);
+    xTaskCreate( &wifiScannerTask, "scannerTask", 2048, &params, 3, NULL );
 
     return ESP_OK;
 }
-
+/*============================================================================*/
