@@ -1,0 +1,49 @@
+name: ESP8266-IDF-Build
+
+on:
+  push:
+    branches: [ main ]  
+  pull_request:
+    branches: [ main ]
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: mock config files    
+      run: |
+        sed -i 's/\/\// /g' navDev/config/mqttConfig.h
+        sed -i 's/\/\// /g' navDev/config/wifiConfig.h        
+    - name: Update OS repos
+      run: |
+        sudo add-apt-repository universe
+        sudo add-apt-repository multiverse
+        sudo apt-get update
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get install -y cmake ninja-build curl 
+        sudo apt-get install -y python3 python3-pip
+        curl https://bootstrap.pypa.io/get-pip.py --output get-pip.py
+        sudo python3 get-pip.py
+        sudo apt-get install -y libncurses-dev build-essential flex bison gperf gcc make 
+    - name: Installing IDF and toolchain and Build the project   
+      run: |
+        echo "Installing ESP8266 SDK..."
+        mkdir $HOME/esp
+        cd $HOME/esp
+        git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git
+        export IDF_PATH="$HOME/esp/ESP8266_RTOS_SDK"
+        python3 -m pip install --user -r $IDF_PATH/requirements.txt
+        echo "Installing xtensa tools..."
+        curl -o $HOME/esp/xtensa.tar.gz https://dl.espressif.com/dl/xtensa-lx106-elf-gcc8_4_0-esp-2020r3-linux-amd64.tar.gz
+        cd $HOME/esp/ 
+        tar -xzf xtensa.tar.gz 
+        export PATH="$PATH:$HOME/esp/xtensa-lx106-elf/bin"
+        . $IDF_PATH/export.sh  
+        cd $GITHUB_WORKSPACE/navDev
+        idf.py build
+
