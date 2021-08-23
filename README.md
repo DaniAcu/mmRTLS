@@ -1,3 +1,7 @@
+[![ESP32-IDF-Build](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp32.yml/badge.svg)](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp32.yml)
+[![ESP8266-IDF-Build](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp8266.yml/badge.svg)](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp8266.yml)
+
+
 # mmRTLS
 Multi mode passive and active indoor real time location system based on trilateration of hybrid wireless networks
 
