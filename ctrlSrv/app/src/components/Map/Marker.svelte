@@ -20,7 +20,6 @@
         type: -1
     } as IIndoorMapMarker;
 
-
     const map = MapContext.get();
 
     onMount(() => map.addMarker({ x, y, id, name, icon, type, onClick }));

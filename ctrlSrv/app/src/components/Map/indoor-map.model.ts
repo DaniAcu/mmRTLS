@@ -9,10 +9,14 @@ const generateIcon = (leaflet: typeof Leaflet, {iconUrl, size, origin}: MarkerIc
     iconAnchor: origin
 })
 
+interface LeafletMarker extends Leaflet.Marker {
+    removeAllEventListeners: () => void;
+}
+
 export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
 
     private readonly leafletMap: Leaflet.Map;
-    private readonly markersMap: Map<T['id'], Leaflet.Marker> = new Map();
+    private readonly markersMap: Map<T['id'], LeafletMarker> = new Map();
 
     constructor(
         private readonly leaflet: typeof Leaflet,
@@ -44,14 +48,20 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
         const newMarker = new this.leaflet.Marker({
             lat: x,
             lng: y
-        });
+        }) as LeafletMarker;
         const iconConfig: MarkerIconOptions = {
             ...this.defaultIconConfig,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             iconUrl: icon || this.leaflet.Icon.Default.imagePath!
         }
 
-        newMarker.on('click', () => onClick?.(marker));
+        const onMarkerClick = () => onClick?.(marker);
+
+        if(onClick) newMarker.on('click', onMarkerClick);
+
+        newMarker.removeAllEventListeners = () => {
+            if(onClick) newMarker.off('click', onMarkerClick);
+        }
 
         newMarker.setIcon(generateIcon(this.leaflet, iconConfig));
         this.markersMap.set(id, newMarker);
@@ -64,6 +74,7 @@ export class IndoorMap<T extends IIndoorMapMarker> implements IIndoorMap<T> {
         if (marker) {
             this.markersMap.delete(markerId);
             marker.remove();
+            marker.removeAllEventListeners();
         }
     }
 
