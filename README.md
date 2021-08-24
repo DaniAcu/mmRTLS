@@ -7,7 +7,7 @@ Multi mode passive and active indoor real time location system based on trilater
 
 mmRTLS is an integral approach of Real Time Indoor Location System based on Wireless trilateration.
 
-![image](https://user-images.githubusercontent.com/5400635/113937080-069e6380-97cf-11eb-8a80-da97398b160c.png)
+![image](https://user-images.githubusercontent.com/5400635/130690028-b22b91b6-d565-49e5-82da-46ebbb9ca610.png)
 
 [(B) Beacon](beacon/README.md)
 [(ND) Navigation Device](navDev/README.md)
