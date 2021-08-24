@@ -3,7 +3,7 @@
   import Map from "../components/Map/Map.svelte";
   import { onMount$ } from "../utils/lifecycles"
   import { getMarkers } from "../streams/markers";
-  import { filter, Observable, startWith, take, tap } from "rxjs";
+  import { audit, filter, Observable, startWith, Subject, take, tap } from "rxjs";
   import { mapBackgroundImage, mapMaxPosition } from "../store/map-background-image.store";
   import { goto } from "$app/navigation";
   import type { IIndoorPosition } from "src/interfaces/position.interface";
@@ -19,9 +19,9 @@
     goto(UPLOAD_MAP_ROUTE);
   }
 
-  const backgroundImage = mapBackgroundImage.pipe(
-    take(1)
-  );
+  const mapUpdated = new Subject<void>();
+
+  const backgroundImage = mapBackgroundImage;
 
   const mapDimensions = (mapMaxPosition as Observable<IIndoorPosition>).pipe(
     tap(dimensions => {
@@ -30,12 +30,12 @@
       }
     }),
     filter(dimensions => !!dimensions),
-
+    audit(() => mapUpdated)
   )
 </script>
 
 <div class="container">
-  <Map backgroundImage={$backgroundImage} mapSize={$mapDimensions}>
+  <Map backgroundImage={$backgroundImage} mapSize={$mapDimensions} on:mapUpdate={() => mapUpdated.next()}>
     {#each $markers as {lat, lng, id, icon} (id)}
       <Marker x={lat} y={lng} {id} {icon}/>
     {/each}

@@ -92,7 +92,7 @@ import type { IndoorMapEvents } from "src/interfaces/indoor-map.interface";
   </section>
   <!-- svelte-ignore a11y-missing-attribute -->
   <div class="map-wrapper">
-    <Map backgroundImage={$imageUrl} {mapSize} on:mapUpdate={handleMapUpdate}>
+    <Map backgroundImage={$imageUrl} {mapSize} on:boundsUpdate={handleMapUpdate}>
       <Marker x={+point1X} y={+point1Y} id={1} icon={BEACON_ICON_URL}></Marker>
       <Marker x={+point2X} y={+point2Y} id={2} icon={BEACON_ICON_URL}></Marker>
     </Map>

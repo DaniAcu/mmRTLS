@@ -10,14 +10,19 @@ import { isSamePosition } from "../../utils/position-helpers.function";
 
   const dispatch = createEventDispatcher<IndoorMapEvents>();
 
-  const notifyMapUpdate = (newDimentions: IIndoorPosition) => {
-    dispatch('mapUpdate', newDimentions);
+  const notifyBoundsUpdate = (newDimentions: IIndoorPosition) => {
+    dispatch('boundsUpdate', newDimentions);
   };
+
+  const notifyMapUpdate = () => {
+    dispatch('mapUpdate');
+  }
   
   let map: IConfigurableIndoorMap<any>;
   export let backgroundImage = './static/indoor-map.png';
   $: {
     map?.updateBackgroundImage(backgroundImage).then((newSize) => {
+      notifyMapUpdate();
       updateMapBounds(newSize);
     });
   }
@@ -39,7 +44,7 @@ import { isSamePosition } from "../../utils/position-helpers.function";
     map?.setBounds(newBounds);
     internalMapSize = newBounds;
     mapSize = newBounds;
-    notifyMapUpdate(newBounds);
+    notifyBoundsUpdate(newBounds);
   }
 
   let mapNode: HTMLDivElement;

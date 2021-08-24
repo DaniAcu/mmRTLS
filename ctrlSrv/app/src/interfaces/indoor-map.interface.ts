@@ -20,5 +20,6 @@ export interface IConfigurableIndoorMap<T extends IIndoorMapMarker> extends IInd
 }
 
 export interface IndoorMapEvents {
-    mapUpdate: IIndoorPosition;
+    boundsUpdate: IIndoorPosition;
+    mapUpdate: void;
 }
