@@ -2,7 +2,7 @@ import mqtt       from 'mqtt'
 import { appLog } from '../helpers/logger.js'
 
 class MqttController { 
-    constructor(ip, port, user, pass, clientId, topicHandler) {
+    constructor(ip, port, user, pass, clientId, topicHandler, retries, timeout) {
         this.ip = ip
         this.port = port
         this.user = user
@@ -11,6 +11,8 @@ class MqttController {
         this.topicHandler = topicHandler
         this.onConnectedListeners = []
         this.mqttClient = null
+        this.retries = retries
+        this.timeout = timeout        
     }
 
     connect() {
@@ -27,6 +29,16 @@ class MqttController {
         if (this.pass !== '') {
             mqttConnectionOptions.password = this.pass
         }
+       
+        if (this.timeout == null) {
+            this.timeout == 5
+        }
+        mqttConnectionOptions.reconnectPeriod = this.timeout * 1000
+
+        if (this.retries == null) {
+            this.retries = 10
+        }
+        mqttConnectionOptions.connectTimeout = this.retries * mqttConnectionOptions.reconnectPeriod
         
         appLog("Connecting MQTT to " + mqtturl + " with options " + JSON.stringify(mqttConnectionOptions))
         
@@ -76,7 +88,7 @@ class MqttController {
 
     publish(topic, message, isJson, isPersistent) {
         if (!this.mqttClient.connected) {
-            appLog("publish to " + topic + ": MQTT  is not connected" + error)
+            appLog("publish to " + topic + ": MQTT  is not connected")
             return -1
         }
         if (isJson == null || isJson == true) {
