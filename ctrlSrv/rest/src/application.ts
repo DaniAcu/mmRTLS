@@ -4,10 +4,12 @@ import {
   RestExplorerBindings,
   RestExplorerComponent,
 } from '@loopback/rest-explorer';
+import multer from 'multer';     
 import {RepositoryMixin} from '@loopback/repository';
 import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
+import{FILE_UPLOAD_SERVICE, STORAGE_DIRECTORY} from './keys'; 
 import {MySequence} from './sequence';
 
 export {ApplicationConfig};
@@ -30,6 +32,9 @@ export class RtlsControlServerApplication extends BootMixin(
     });
     this.component(RestExplorerComponent);
 
+    // Configure file upload with multer options
+    this.configureFileUpload(options.fileStorageDirectory);
+
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
     this.bootOptions = {
@@ -40,5 +45,25 @@ export class RtlsControlServerApplication extends BootMixin(
         nested: true,
       },
     };
+  }
+
+  /**
+  * Configure `multer` options for file upload
+  */
+  protected configureFileUpload(destination?: string) {
+    // Upload files to `dist/.sandbox` by default
+    destination = destination ?? path.join(__dirname, '../.sandbox');
+    this.bind(STORAGE_DIRECTORY).to(destination);
+    const multerOptions: multer.Options = {
+      storage: multer.diskStorage({
+        destination,
+        // Use the original file name as is
+        filename: (req, file, cb) => {
+          cb(null, file.originalname);
+        },
+      }),
+    };
+    // Configure the file upload service with multer options
+    this.configure(FILE_UPLOAD_SERVICE).to(multerOptions);
   }
 }
