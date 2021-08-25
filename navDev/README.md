@@ -30,17 +30,66 @@ Connection handler, resolves wifi connection as a client to an Access Point
     https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/
     Place it e.g: $HOME/esp/IDF
 4. Get your IDF Paths:
+    ```
     export IDF_PATH=$HOME/esp/esp-idf
     export IDF_TOOL_PATH=$HOME/esp/xtensa-lx106-elf/bin:$IDF_PATH/tools
+    ```
+    
 5. Get requirements:
-    ´python -m pip install --user -r $IDF_PATH/requirements.txt´
+    `python -m pip install --user -r $IDF_PATH/requirements.txt`
 
 # Configure
-idf.py menuconfig 
+```idf.py menuconfig```
+
 Remember to set your desired desired bitrate on the MONITOR_BAUD, if not defaults to 74880
 
 # Build
-idf.py build
+```idf.py build```
 
 # Flash
-idf.py flash
+```idf.py flash```
+
+# MQTT configuration topics
+## Known node list
+
+Just publish a JSON array named `beacons` enumerating the MAC address of each kwown beacon. Should look like this:
+
+Target topic: `/topictest/beacon_list`
+
+```json
+{
+  "beacons": [
+    "FC:52:8D:75:C6:96",
+    "AC:20:2E:E0:BB:28",
+    "4C:6E:6E:F5:C0:DC",
+    "4C:6E:6E:F5:C0:D4"
+  ]
+}
+```
+
+##  AP credentials list
+
+Just publish a JSON array named `ap_credentials` relating the MAC of each AP with its respective password.. Should look like this:
+
+Target topic: `/topictest/cred_list`
+
+```json
+{
+    "ap_credentials": [
+        {
+            "mac": "C0:89:AB:AC:A2:B9",
+            "pwd": "my_secret_pass"
+        },
+        {
+            "mac": "4C:6E:6E:F9:30:14",
+            "pwd": "password1"
+        },
+        {
+            "mac": "4C:6E:6E:F9:30:1C",
+            "pwd": "complex_password"
+        }
+    ]
+}
+
+```
+

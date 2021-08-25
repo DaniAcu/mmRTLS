@@ -1,4 +1,5 @@
-import { Marker, MarkerType } from "./marker.types";
+import { MarkerType } from "./marker.types";
+import type { Marker } from "./marker.types";
 import type { NavDevice } from 'src/interfaces/nav-device.interface';
 import { catchError, map, Observable, of } from "rxjs";
 import { fromFetch } from "rxjs/fetch";

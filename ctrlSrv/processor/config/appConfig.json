@@ -8,6 +8,10 @@
         "topics" : {
             "rssi" : "/topictest/macrssi_data",
             "beacons" : "/topictest/beacon_list"
+        },
+        "reconnect" : {
+            "retries" : 30,
+            "timeoutSec" : 5
         }
     },
     "mysql": {
@@ -18,6 +22,10 @@
         "dbName" : "mmRTLS",
         "watcher" : {
             "refreshMs" : 500
+        },
+        "reconnect" : {
+            "retries" : 30,
+            "timeoutSec" : 5
         }
     },
     "parsing" : {

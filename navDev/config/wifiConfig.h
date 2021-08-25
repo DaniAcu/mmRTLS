@@ -5,32 +5,27 @@
 extern "C" {
 #endif
 
-extern void Wifi_PrintDebug(const char *log);
+    #define CONFIG_WIFI_RECONNECT_TRIES         ( 5 )  
+    #define CONFIG_WIFI_RSSIDATA_QUEUE_SIZE     ( 16 )
+    #define CONFIG_WIFI_CHANNEL_MAX             ( 14 )
+    #define CONFIG_WIFI_SCAN_TIME_MS_BTW_CH     ( 100 )
+    #define CONFIG_MAX_SSID_NAME_LENGTH         ( 32 )
+    #define CONFIG_MAX_CRED_PWD_LENGTH          ( 64 )
+    #define CONFIG_MAX_ENTRIES_ON_AP_CRED_LIST  ( 32 )
+    #define CONFIG_WIFI_USE_ROAMING             ( 1 )
+    #define CONFIG_WIFI_PERSISTENT_CREDENTIALS  ( 1 )
+    #define CONFIG_WIFI_RETRY_MAX               ( 5 )
+    #define CONFIG_LED_STATUS_PIN               ( 5 )
 
-#define WIFI_RECONNECT_TRIES        ( 5 )  
-#define WIFI_RSSIDATA_QUEUE_SIZE    ( 16 )
-#define WIFI_CHANNEL_MAX            ( 14 )
-#define WIFI_SCAN_TIME_MS_BTW_CH    ( 500 )
-#define MAX_SSID_NAME_LENGTH        ( 32 )
-#define MAX_CRED_PWD_LENGTH         ( 64 )
-#define MAX_ENTRIES_ON_AP_CRED_LIST ( 32 )
-#define WIFI_VERBOSE                ( 1 )
-#define WIFI_USE_ROAMING            ( 1 )
-#define WIFI_PERSISTENT_CREDENTIALS ( 0 )
+    //#define CONFIG_WIFI_DEFAULT_SSID            "DEFAULT_AP_SSID"
+    //#define CONFIG_WIFI_DEFAULT_PASS            "DEFAULT_AP_PASS"
 
-/*=====================Default AP =========================*/
-//#define WIFI_SSID                   "DEFAULT_AP_SSID"  // test_ pasar a flash
-//#define WIFI_PASS                   "DEFAULT_AP_PASSWORD" // test_ pasar a flash
-#define WIFI_RETRY_MAX              ( 5 )
-
-
-#ifndef WIFI_SSID
-    #error Set the Access Point SSID in WIFI_SSID
-#endif 
-#ifndef WIFI_PASS
-    #error Set the Access Point password in WIFI_PASS
-#endif 
-
+    #ifndef CONFIG_WIFI_DEFAULT_SSID
+        #error Set the default Access Point SSID in CONFIG_WIFI_DEFAULT_SSID
+    #endif 
+    #ifndef CONFIG_WIFI_DEFAULT_PASS
+        #error Set the default Access Point password in CONFIG_WIFI_DEFAULT_PASS
+    #endif 
 
 #ifdef __cplusplus
 }

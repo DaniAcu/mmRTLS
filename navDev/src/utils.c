@@ -1,5 +1,5 @@
 #include "utils.h"
-
+#include "ieee80211_structs.h"
 
 /*============================================================================*/
 char *utilsMAC2str( uint8_t *mac_addr, char *dst, size_t ndst )
@@ -21,8 +21,8 @@ int utils_str2MAC( char *s, uint8_t *dst )
         do {
             dst[ i++ ] = (uint8_t)strtoul( ptr+1, NULL, 16 );
             ptr = strchr( ptr+1, ':' );
-        } while ( ( NULL !=  ptr ) && ( i < 6 ) );
-        retval = ( i == 6 )? 0 : -1;
+        } while ( ( NULL !=  ptr ) && ( i < MAC_ADDR_LENGTH ) );
+        retval = ( MAC_ADDR_LENGTH == i )? 0 : -1;
     }
     return retval;
 }

@@ -18,7 +18,7 @@ int messageBundlerInsert( messageBundlerEntity_t* pEntity, rssiData_t *pData )
         name = cJSON_CreateString( pEntity->MACstr );
          
         if ( ( NULL != name ) && ( NULL != pEntity->array ) ) {
-            cJSON_AddItemToObject( pEntity->root, "navDevMac", name);
+            cJSON_AddItemToObject( pEntity->root, "navDevMac", name );
             cJSON_AddItemToObject( pEntity->root, "Beacons", pEntity->array );
         }
         else {
@@ -32,15 +32,15 @@ int messageBundlerInsert( messageBundlerEntity_t* pEntity, rssiData_t *pData )
         
         cJSON_AddStringToObject( iEntry, "mac",   iMACstr );
         cJSON_AddNumberToObject( iEntry, "channel",   pData->channel );
-        cJSON_AddNumberToObject( iEntry, "rssi",	  pData->rssi);
-        cJSON_AddNumberToObject( iEntry, "timestamp", pData->timestamp);   
+        cJSON_AddNumberToObject( iEntry, "rssi",	  pData->rssi );
+        cJSON_AddNumberToObject( iEntry, "timestamp", pData->timestamp );   
         cJSON_AddItemToObject( pEntity->array, iMACstr, iEntry ); 
 
         ESP_LOGI( TAG, "Message - Mac=%s, RSSI=%d, channel=%d", iMACstr, pData->rssi, pData->channel );
         retValue = 0;   
     }
     else {
-        ESP_LOGE( TAG, "{cJSON} : Cant allocate a new subentity...");
+        ESP_LOGE( TAG, "{cJSON} : Cant allocate a new subentity..." );
     }
     return retValue;
 }
@@ -61,14 +61,13 @@ int messageBundlerPublish( messageBundlerEntity_t* pEntity, messageBundlerPublis
     json_string = cJSON_Print( pEntity->root );
     if ( NULL != json_string ) {
         publisherFcn( json_string, arg );
-        printf("%s\r\n", json_string );
+        ESP_LOGI( TAG, "%s\r\n", json_string );
         cJSON_free( json_string );
         retValue = 0;
     }
     else {
-        ESP_LOGE( TAG, "cJSON_Print cant allocate the string");
+        ESP_LOGE( TAG, "cJSON_Print cant allocate the string" );
     }
     return retValue;
 }
 /*============================================================================*/
-

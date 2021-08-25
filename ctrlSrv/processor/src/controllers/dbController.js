@@ -11,7 +11,7 @@ class Watchable {
 }
 
 class DbController {
-    constructor(ip, port, user, pass, database, watcherRefreshMs) {
+    constructor(ip, port, user, pass, database, watcherRefreshMs, connectionRetries, connectionTimeout) {
         this.mySQLConnectionOptions = {
             host: ip,
             user: user,
@@ -22,38 +22,65 @@ class DbController {
         this.onConnectedListeners = []
         this.dbWatcherListeners = new Map()
         this.watcherRefreshMs = watcherRefreshMs
+        this.connectionRetries = connectionRetries
+        this.connectionCounter = connectionRetries
+        this.connectionTimeout = connectionTimeout
 
+        this.open()      
+    }
+
+    open() {
+        clearInterval(this.queryChecksumTimer)
         appLog("Connecting MySQL to " + JSON.stringify(this.mySQLConnectionOptions))
         this.mysqlConn = mysql.createConnection(this.mySQLConnectionOptions)
 
         let self = this;
         this.mysqlConn.connect(function(err) {
-            if (err) {
-                appLog("Could not connect to MySQL DB: " + err)
-                process.exit() //@TODO: See how to manage error and disconnection scenarios
-            }
-            appLog("Connected to MySQL DB")
-            if (self.onConnectedListeners.length > 0) {
-                self.onConnectedListeners.forEach(listener => {
-                    listener()
-                });                
-            }
-            //@TODO: On disconnection this timer is destroyed
-            appLog("MySQL watcher every " + self.watcherRefreshMs + " ms")
-            this.queryChecksumTimer = setInterval(() => {
-                self.queryChecksums() 
-            }, self.watcherRefreshMs);    
-          })
+             if (err) {
+                appLog("MySql could not connect to DB: " + err + ", code " + err.code)
 
-        this.watchedConditions = new Map()        
+                if (self.connectionCounter > 0) {
+                    let count = self.connectionRetries - self.connectionCounter + 1
+                    appLog("MySql Retry connection " + count  + " in " + self.connectionTimeout + " seconds")
+                    setTimeout(()=>{ self.open()}, self.connectionTimeout * 1000)
+                    self.connectionCounter = self.connectionCounter - 1
+                } else {
+                    appLog("MySql Connection retries exhausted, closing")
+                    process.exit() 
+                }
+            } else {
+                appLog("Connected to MySQL DB")
+                if (self.onConnectedListeners.length > 0) {
+                    self.onConnectedListeners.forEach(listener => {
+                        listener()
+                    });                
+                }
+                self.connectionCounter = self.connectionRetries
+                appLog("MySQL watcher every " + self.watcherRefreshMs + " ms")
+                self.queryChecksumTimer = setInterval(() => {
+                    self.queryChecksums() 
+                }, self.watcherRefreshMs);   
+            }
+        })
+
+        this.mysqlConn.on('error', function onError(err) {
+            appLog("MySQL DB error: " + err + ", code " + err.code)
+            if (err.code == 'PROTOCOL_CONNECTION_LOST' ) {
+                self.open()
+            } else if (err.code == "PROTOCOL_PACKETS_OUT_OF_ORDER") {
+                self.close(() => {
+                    self.open()
+                })
+            }
+        })
     }
 
     listenOnConnected(callback) {
         this.onConnectedListeners.push(callback)
     }
 
-    close() {
-        this.mysqlConn.stop()
+    close(callback) {
+        this.mysqlConn.end(callback)
     }
     
     queryPromise(query, params) {

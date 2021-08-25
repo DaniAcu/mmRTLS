@@ -10,3 +10,7 @@ export interface IIndoorMapMarker extends IEntity, IIndoorPosition {
     type: number;
     onClick?: (marker: IIndoorMapMarker) => void;
 }
+
+export interface IIndoorMapMarkerEntity extends IIndoorMapMarker {
+    updatePosition: (newPosition: IIndoorPosition) => void;
+}

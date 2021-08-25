@@ -1,9 +1,13 @@
+[![ESP32-IDF-Build](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp32.yml/badge.svg)](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp32.yml)
+[![ESP8266-IDF-Build](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp8266.yml/badge.svg)](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp8266.yml)
+
+
 # mmRTLS
 Multi mode passive and active indoor real time location system based on trilateration of hybrid wireless networks
 
 mmRTLS is an integral approach of Real Time Indoor Location System based on Wireless trilateration.
 
-![image](https://user-images.githubusercontent.com/5400635/113937080-069e6380-97cf-11eb-8a80-da97398b160c.png)
+![image](https://user-images.githubusercontent.com/5400635/130690276-c9533f61-1953-41e9-93a0-59ed7498a45b.png)
 
 [(B) Beacon](beacon/README.md)
 [(ND) Navigation Device](navDev/README.md)

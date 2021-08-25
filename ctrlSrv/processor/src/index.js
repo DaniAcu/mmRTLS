@@ -31,6 +31,9 @@ function main() {
     const mariaDbPass  = nconf.get('mysql:pass')
     const mariaDbDataBase = nconf.get('mysql:dbName')
     const watcherRefreshMs = nconf.get('mysql:watcher:refreshMs')
+    const mariaDbConnectionRetries = nconf.get('mysql:reconnect:retries')
+    const mariaDbConnectionTimeout = nconf.get('mysql:reconnect:timeoutSec')
+    
 
     //Create dataBase controller with db information
     let dbController = new DbController(
@@ -39,7 +42,9 @@ function main() {
         mariaDbUser,
         mariaDbPass,
         mariaDbDataBase,
-        watcherRefreshMs
+        watcherRefreshMs,
+        mariaDbConnectionRetries,
+        mariaDbConnectionTimeout
     )
 
     //Setting environment constants MQTT
@@ -47,6 +52,8 @@ function main() {
     const mqttPort = nconf.get('mqtt:port')
     const mqttUser = nconf.get('mqtt:user')
     const mqttPass = nconf.get('mqtt:pass')
+    const mqttConnectionRetries = nconf.get('mqtt:reconnect:retries')
+    const mqttConnectionTimeout = nconf.get('mqtt:reconnect:timeoutSec')
 
     //Topics
     const mqttTopicRSSI   = nconf.get('mqtt:topics:rssi')
@@ -67,7 +74,9 @@ function main() {
         mqttUser,
         mqttPass,
         appClientId,
-        mqttTopicHandlers
+        mqttTopicHandlers,
+        mqttConnectionRetries,
+        mqttConnectionTimeout
     )
 
     // Beacons information

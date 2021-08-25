@@ -1,4 +1,4 @@
-import { map, Observable, startWith, BehaviorSubject, timer, zip } from 'rxjs';
+import { map, Observable, BehaviorSubject, zip } from 'rxjs';
 import { beacons$ } from './beacons';
 import { navDevices$ } from './navdev';
 import type { Marker } from './marker.types'

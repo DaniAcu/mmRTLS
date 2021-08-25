@@ -1,4 +1,5 @@
-import { timer, MonoTypeOperatorFunction } from "rxjs";
+import { timer } from "rxjs";
+import type { MonoTypeOperatorFunction } from "rxjs"
 import { switchMapTo } from "rxjs/operators";
 
 export function poll<T>(pollInterval: number): MonoTypeOperatorFunction<T> {
