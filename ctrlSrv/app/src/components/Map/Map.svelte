@@ -18,13 +18,15 @@
 	const notifyMapUpdate = () => {
 		dispatch('mapUpdate');
 	};
+	
+	export let editMode = true;
 
 	let map: IndoorMap<Marker>;
 	export let backgroundImage = './static/indoor-map.png';
 	$: {
-		map?.updateBackgroundImage(backgroundImage).then((newSize) => {
+		map?.updateBackgroundImage(backgroundImage, editMode).then((newSize) => {
 			notifyMapUpdate();
-			updateMapBounds(newSize);
+      		notifyBoundsUpdate(newSize);
 		});
 	}
 
@@ -32,18 +34,18 @@
 		x: NaN,
 		y: NaN
 	};
-	let internalMapSize: IIndoorPosition = mapSize;
 
 	$: {
-		updateMapBounds(mapSize);
+		if (map) {
+			updateMapBounds(mapSize);
+		}
 	}
 
 	const updateMapBounds = (newBounds: IIndoorPosition) => {
-		if (isSamePosition(internalMapSize, newBounds)) {
-			return;
+		if (isSamePosition(map.getBounds(), newBounds)) {
+		return;
 		}
 		map?.setBounds(newBounds);
-		internalMapSize = newBounds;
 		mapSize = newBounds;
 		notifyBoundsUpdate(newBounds);
 	};
@@ -54,6 +56,7 @@
 
 	onMount(async () => {
 		map = await createMap({ imageOverlay: backgroundImage, target: mapNode });
+    	notifyBoundsUpdate(map.getBounds());
 	});
 
 	onDestroy(() => {

@@ -16,10 +16,10 @@ export interface IIndoorMapActions {
 export type IIndoorMap<T extends Marker> = IIndoorMapMarkersInteractions<T> & IIndoorMapActions;
 
 export interface IConfigurableIndoorMap<T extends Marker> extends IIndoorMap<T> {
-	updateBackgroundImage(backgroundImage: HTMLImageElement): IIndoorPosition;
-	updateBackgroundImage(backgroundImage: string): Promise<IIndoorPosition>;
+	updateBackgroundImage(backgroundImage: HTMLImageElement, useImageAspectRatio?: boolean): IIndoorPosition;
+	updateBackgroundImage(backgroundImage: string, useImageAspectRatio?: boolean): Promise<IIndoorPosition>;
 	updateBackgroundImage(
-		backgroundImage: string | HTMLImageElement
+		backgroundImage: string | HTMLImageElement, useImageAspectRatio: boolean
 	): Promise<IIndoorPosition> | IIndoorPosition;
 }
 

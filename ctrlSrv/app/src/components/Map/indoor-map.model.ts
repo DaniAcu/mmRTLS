@@ -94,15 +94,15 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		return this.currentBounds;
 	}
 
-	public updateBackgroundImage(newImage: HTMLImageElement): IIndoorPosition;
-	public async updateBackgroundImage(backgroundImage: string): Promise<IIndoorPosition>;
+	public updateBackgroundImage(newImage: HTMLImageElement, useImageAspectRatio?: boolean): IIndoorPosition;
+	public async updateBackgroundImage(backgroundImage: string, useImageAspectRatio?: boolean): Promise<IIndoorPosition>;
 	public updateBackgroundImage(
-		newImage: HTMLImageElement | string
+		newImage: HTMLImageElement | string, useImageAspectRatio = false
 	): Promise<IIndoorPosition> | IIndoorPosition {
 		if (typeof newImage === 'string') {
-			return loadImage(newImage).then((image) => this.processBackgroundImage(image));
+			return loadImage(newImage).then((image) => this.processBackgroundImage(image, useImageAspectRatio));
 		}
-		return this.processBackgroundImage(newImage);
+		return this.processBackgroundImage(newImage, useImageAspectRatio);
 	}
 
 	public destroy(): void {
@@ -110,17 +110,16 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		this.leafletMap.remove();
 	}
 
-	private processBackgroundImage(image: HTMLImageElement): IIndoorPosition {
+	private processBackgroundImage(image: HTMLImageElement, useImageAspectRatio: boolean): IIndoorPosition {
 		const imageUrl = image.src;
 		const imageOverlayElement = this.imageOverlay.getElement();
 		if (imageUrl && imageOverlayElement) {
 			imageOverlayElement.src = imageUrl;
 			const newImageAspectRatio =
 				imageOverlayElement.naturalWidth / imageOverlayElement.naturalHeight;
-			const newHeight = this.currentBounds.x / newImageAspectRatio;
 			this.setBounds({
 				...this.currentBounds,
-				y: newHeight
+				y: useImageAspectRatio ? this.currentBounds.x / newImageAspectRatio : this.currentBounds.y
 			});
 		}
 		return this.getBounds();

@@ -52,17 +52,13 @@
 		const id = e.detail;
 		markerSubject.next(id);
 	};
-
-  const reSetMapSize = () => {
-    mapSize = {...mapSize};
-  };
 </script>
 
 <div class="container">
 	<Map
 		{backgroundImage}
 		{mapSize}
-		on:mapUpdate={reSetMapSize}
+		editMode={false}
 	>
 		{#each $markers$ as { x, y, id, icon } (id)}
 			<Marker {x} {y} {id} {icon} on:click={onMarkerClick} />
