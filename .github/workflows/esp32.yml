@@ -1,0 +1,26 @@
+name: ESP32-IDF-Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: mock config files    
+      run: |
+        sed -i 's/\/\// /g' navDev/config/mqttConfig.h
+        sed -i 's/\/\// /g' navDev/config/wifiConfig.h
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@latest
+      with:
+        path: 'navDev'

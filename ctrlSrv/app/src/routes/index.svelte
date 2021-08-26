@@ -27,27 +27,47 @@
 </script>
 
 <script lang="ts">
-  import Marker from "../components/Map/Marker.svelte";
-  import Map from "../components/Map/Map.svelte";
-  import { onMount$ } from "../utils/lifecycles"
-  import { getMarkers } from "../streams/markers";
-  import { startWith } from "rxjs";
-  import type { IIndoorPosition } from "src/interfaces/position.interface";
+	import Marker from '../components/Map/Marker.svelte';
+	import Map from '../components/Map/Map.svelte';
+	import BeaconDetails from '../views/BreaconDetails/BeaconDetails.svelte';
+	import NavDeviceDetails from '../views/NavDeviceDetails/NavDeviceDetails.svelte';
+	import { onMount$ } from '../utils/lifecycles';
+	import { getMarkers } from '../streams/markers';
+	import type { IIndoorPosition } from '$src/interfaces/position.interface';
+	import {
+		getBeaconClicked,
+		getNavDeviceClicked,
+		markerSubject
+	} from '$src/streams/markers-interactions';
 
   export let mapSize: IIndoorPosition;
   export let backgroundImage: string;
 
-  const markers = onMount$.pipe(
-    getMarkers,
-    startWith([])
-  );
+	const markers$ = onMount$.pipe(getMarkers);
 
+	const beaconsMarkerClicked$ = getBeaconClicked(markers$);
+	const navDeviceMarkerClicked$ = getNavDeviceClicked(markers$);
+
+	const onMarkerClick = (e: CustomEvent<string>) => {
+		const id = e.detail;
+		markerSubject.next(id);
+	};
+
+  const reSetMapSize = () => {
+    mapSize = {...mapSize};
+  };
 </script>
 
 <div class="container">
-  <Map {backgroundImage} {mapSize}>
-    {#each $markers as {lat, lng, id, icon} (id)}
-      <Marker x={lat} y={lng} {id} {icon}/>
-    {/each}
-  </Map>
+	<Map
+		{backgroundImage}
+		{mapSize}
+		on:mapUpdate={reSetMapSize}
+	>
+		{#each $markers$ as { x, y, id, icon } (id)}
+			<Marker {x} {y} {id} {icon} on:click={onMarkerClick} />
+		{/each}
+	</Map>
+	<BeaconDetails beacon={$beaconsMarkerClicked$} />
+	<NavDeviceDetails navDevice={$navDeviceMarkerClicked$} />
 </div>

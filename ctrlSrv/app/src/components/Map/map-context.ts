@@ -1,15 +1,16 @@
-import { setContext, getContext } from "svelte";
-import type { IIndoorMapMarker } from "src/interfaces/position.interface";
-import type { IIndoorMap } from "src/interfaces/indoor-map.interface";
-
+import { setContext, getContext } from 'svelte';
+import type { IIndoorMap } from '$src/interfaces/indoor-map.interface';
+import type { Marker, MarkerEvents } from '$src/streams/marker.types';
 
 const key = Symbol('map');
 
-type MapGetter<T extends IIndoorMapMarker> = () => IIndoorMap<T>
+type InteractiveMarker = Marker & MarkerEvents;
+
+type MapGetter<T extends InteractiveMarker> = () => IIndoorMap<T>;
 
 export const MapContext = {
-  get: <T extends IIndoorMapMarker>(): IIndoorMap<T> => getContext<MapGetter<T>>(key)(),
-  set: <T extends IIndoorMapMarker>(map: MapGetter<T>): void => setContext(key, map)
-}
+	get: <T extends InteractiveMarker>(): IIndoorMap<T> => getContext<MapGetter<T>>(key)(),
+	set: <T extends InteractiveMarker>(map: MapGetter<T>): void => setContext(key, map)
+};
 
 export default MapContext;

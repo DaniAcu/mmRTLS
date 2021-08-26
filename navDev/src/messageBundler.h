@@ -1,6 +1,10 @@
 #ifndef  MESSAGEBUNDLER_H
 #define  MESSAGEBUNDLER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
     #include <stdio.h>
     #include <string.h>
     #include <stdint.h>
@@ -12,11 +16,12 @@
 
     #define MESSAGEBUNDLER_ENTITY_INITIALIZER      { NULL, NULL, NULL } 
 
-    typedef struct {
+    typedef struct 
+    {
         char *MACstr;
         cJSON *root;
         cJSON *array;
-    }messageBundlerEntity_t;
+    } messageBundlerEntity_t;
 
     typedef void (*messageBundlerPublisher_t)( char *, void * );
 
@@ -24,5 +29,9 @@
     int messageBundlerInsert( messageBundlerEntity_t* pEntity, rssiData_t *pData );
     void messageBundlerCleanup( messageBundlerEntity_t* pEntity );
     int messageBundlerPublish( messageBundlerEntity_t* pEntity, messageBundlerPublisher_t publisherFcn, void *arg );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*MESSAGEBUNDLER_H*/
