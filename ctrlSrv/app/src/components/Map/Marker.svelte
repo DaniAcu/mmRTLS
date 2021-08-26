@@ -1,38 +1,39 @@
 <script lang="ts">
-    import type { IIndoorMapMarker, IIndoorMapMarkerEntity } from "src/interfaces/position.interface";
+	import { MarkerType } from '$src/streams/marker.types';
+	import type { Marker } from '$src/streams/marker.types';
 
-    import { onDestroy, onMount } from "svelte";
-    import MapContext from "./map-context";
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+	import type { IndoorMapMarker } from './indoor-map-marker.model';
+	import MapContext from './map-context';
 
-    export let {
-        x,
-        y,
-        id,
-        name,
-        icon,
-        type
-    }: IIndoorMapMarker = {
-        x: NaN,
-        y: NaN,
-        name: '',
-        id: -1,
-        type: -1,
-        icon: undefined
-    };
+	export let { x, y, id, type, icon }: Marker = {
+		x: NaN,
+		y: NaN,
+		id: '1',
+		type: MarkerType.DEFAULT,
+		icon: undefined
+	} as Marker;
 
-    $: {
-        if (x && y && markerEntity) {
-            markerEntity.updatePosition({x, y});
-        }
-    }
+	const map = MapContext.get();
+	let markerEntity: IndoorMapMarker;
 
+	interface MarkerEvents {
+		click: string;
+	}
 
-    const map = MapContext.get();
-    let markerEntity: IIndoorMapMarkerEntity;
+	const dispatch = createEventDispatcher<MarkerEvents>();
 
-    onMount(() => {
-        markerEntity = map.addMarker({ x, y, id, name, icon, type });
-    });
+	const onClick = (id: Marker['id']) => dispatch('click', id);
 
-    onDestroy(() => map.removeMarker({ x, y, id, name, icon, type }));
+	onMount(() => {
+		markerEntity = map.addMarker({ x, y, id, icon, type, onClick });
+	});
+
+	$: {
+		if (x && y && markerEntity) {
+			markerEntity.setPosition({ x, y });
+		}
+	}
+
+	onDestroy(() => map.removeMarker({ x, y, id, icon, type }));
 </script>
