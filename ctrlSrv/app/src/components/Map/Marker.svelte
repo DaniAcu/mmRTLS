@@ -30,7 +30,7 @@
 	});
 
 	$: {
-		if (x && y && markerEntity) {
+		if (!isNaN(x) && !isNaN(y) && markerEntity) {
 			markerEntity.setPosition({ x, y });
 		}
 	}

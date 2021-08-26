@@ -23,7 +23,7 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		nativeElement: HTMLElement,
 		backgroundImage?: HTMLImageElement,
 		private defaultIconConfig: MarkerIconSizeOptions = {
-			origin: [0, 16],
+			origin: [16, 32],
 			size: 32
 		}
 	) {
