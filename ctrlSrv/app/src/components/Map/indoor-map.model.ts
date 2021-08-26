@@ -87,6 +87,7 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		};
 		this.imageOverlay.setBounds(bounds);
 		this.leafletMap.fitBounds(bounds);
+		this.leafletMap.setView(bounds.getCenter(), this.leafletMap.getBoundsZoom(bounds));
 	}
 
 	public getBounds(): IIndoorPosition {
