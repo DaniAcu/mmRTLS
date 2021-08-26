@@ -17,7 +17,11 @@
 	const map = MapContext.get();
 	let markerEntity: IndoorMapMarker;
 
-	const dispatch = createEventDispatcher();
+	interface MarkerEvents {
+		click: string
+	}
+
+	const dispatch = createEventDispatcher<MarkerEvents>();
 
 	const onClick = (id: Marker['id']) => dispatch('click', id);
 
