@@ -6,7 +6,8 @@ static int8_t rssiFilter_RMOW( rssiFilter_t *f, int8_t s );
 
 
 /*============================================================================*/
-int rssiFilterIsInitialized( rssiFilter_t *f ){
+int rssiFilterIsInitialized( rssiFilter_t *f )
+{
     int retVal = 0;
     if ( NULL != f ) {
         return ( ( NULL != f->filtFcn ) && ( RSSI_FILTER_MODE_NONE != f->mode ) );
@@ -14,13 +15,15 @@ int rssiFilterIsInitialized( rssiFilter_t *f ){
     return retVal;
 } 
 /*============================================================================*/
-void rssiFilterReset( rssiFilter_t *f ) {
+void rssiFilterReset( rssiFilter_t *f ) 
+{
     if ( NULL != f ) {
         f->init = 1u;
     }
 }
 /*============================================================================*/
-static int8_t rssiFilter_LPF1( rssiFilter_t *f, int8_t s ) {
+static int8_t rssiFilter_LPF1( rssiFilter_t *f, int8_t s ) 
+{
     float u, fo;
     
     u = (float)s;
@@ -35,7 +38,8 @@ static int8_t rssiFilter_LPF1( rssiFilter_t *f, int8_t s ) {
     return (int8_t)fo;
 }
 /*============================================================================*/
-static int8_t rssiFilter_LPF2( rssiFilter_t *f, int8_t s ) {
+static int8_t rssiFilter_LPF2( rssiFilter_t *f, int8_t s ) 
+{
     float u, fo;
     
     u = (float)s;
@@ -71,14 +75,14 @@ static int8_t rssiFilter_RMOW( rssiFilter_t *f, int8_t s )
     m = 0;
     for ( i = (RSSI_FILTER_WINDOW_SIZE-1); i >= 1 ; --i ) { 
         f->w[ i ] = f->w[ i-1 ]; /*shift the window*/
-        m += f->w[ i ]; 
+        m += f->w[ i ]; /*sum old samples*/
     }
         
-    f->w[ 0 ] = s;
-    if( abs( f->m - s )  > (int)( f->alfa*abs( f->m ) ) ) {
-        f->w[ 0 ] = (int8_t)f->m; /*replace the outlier with the median*/
+    f->w[ 0 ] = s; 
+    if( abs( f->m - s )  > (int)( f->alfa*abs( f->m ) ) ) { /*is it an outlier?*/
+        f->w[ 0 ] = (int8_t)f->m; /*replace the outlier with the dynamic median*/
     }
-    f->m = (int8_t)( ( m + f->w[ 0 ] ) / RSSI_FILTER_WINDOW_SIZE ); 
+    f->m = (int8_t)( ( m + f->w[ 0 ] ) / RSSI_FILTER_WINDOW_SIZE );  /*compute new mean for next iteration*/
     fo = f->w[ 0 ]; 
     
     return (int8_t)fo;
@@ -99,14 +103,14 @@ int rssiFilterInit( rssiFilter_t *f , rssiFilterMode_t mode, float alfa )
                 break;
             case RSSI_FILTER_MODE_LPF2:
                 {
-                    float k=0, aa, p1, c;
+                    float aa, p1, c;
                     aa = alfa*alfa;
-                    p1 = sqrtf( 2.0f*alfa ) + aa;
-                    c = 1.0 + p1;
+                    p1 = sqrtf( 2.0f*alfa );
+                    c = 1.0 + p1 + aa;
                     f->k = aa/c;
-                    f->a1 = 2*(aa -1 )/c;
-                    f->a2 = (1-p1)/c;
-                    f->b1 = 2*k;
+                    f->a1 = 2.0f*( aa - 1.0f )/c;
+                    f->a2 = ( 1.0f - p1 + aa )/c;
+                    f->b1 = 2.0*f->k;
                 }
                 f->filtFcn = &rssiFilter_LPF2;
                 break;
