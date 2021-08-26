@@ -18,7 +18,7 @@
 	let markerEntity: IndoorMapMarker;
 
 	interface MarkerEvents {
-		click: string
+		click: string;
 	}
 
 	const dispatch = createEventDispatcher<MarkerEvents>();

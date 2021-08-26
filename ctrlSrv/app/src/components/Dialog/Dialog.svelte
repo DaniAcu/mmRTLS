@@ -1,10 +1,15 @@
-<script>
+<script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import Card from 'smelte/src/components/Card';
 	import Button from 'smelte/src/components/Button';
 
 	export let isVisible = false;
-	const dispatch = createEventDispatcher();
+
+	interface DialogEvents {
+		close: void;
+	}
+
+	const dispatch = createEventDispatcher<DialogEvents>();
 	function onClose() {
 		dispatch('close');
 	}
