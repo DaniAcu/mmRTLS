@@ -1,163 +1,135 @@
-import type { IConfigurableIndoorMap } from "src/interfaces/indoor-map.interface";
-import type { IIndoorMapMarker, IIndoorMapMarkerEntity, IIndoorPosition } from "src/interfaces/position.interface";
+import type { IConfigurableIndoorMap } from '$src/interfaces/indoor-map.interface';
+import type { IIndoorPosition } from '$src/interfaces/position.interface';
 import type * as Leaflet from 'leaflet';
-import type { MarkerIconOptions, MarkerIconSizeOptions } from "src/interfaces/marker-icon.interface";
-import { IndoorMapMarker } from "./indoor-map-marker.model";
-import { loadImage } from "../../utils/load-image.function";
+import type { MarkerIconSizeOptions } from '$src/interfaces/marker-icon.interface';
+import { IndoorMapMarker } from './indoor-map-marker.model';
+import { loadImage } from '../../utils/load-image.function';
+import type { Marker, MarkerEvents } from '$src/streams/marker.types';
 
-const generateIcon = (leaflet: typeof Leaflet, {iconUrl, size, origin}: MarkerIconOptions) => leaflet.icon({
-    iconUrl: iconUrl,
-    iconSize: [size, size],
-    iconAnchor: origin
-})
-export class IndoorMap<T extends IIndoorMapMarker> implements IConfigurableIndoorMap<T> {
+type InteractiveMarker = Marker & MarkerEvents;
 
-    private readonly leafletMap: Leaflet.Map;
-    private readonly markersMap: Map<T['id'], {
-        markerEntity: IndoorMapMarker,
-        leafletMarker: Leaflet.Marker
-    }> = new Map();
+export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndoorMap<T> {
+	private readonly leafletMap: Leaflet.Map;
+	private readonly markersMap: Map<T['id'], IndoorMapMarker> = new Map();
 
-    private imageOverlay!: Leaflet.ImageOverlay;
-    private currentBounds: IIndoorPosition = {
-        x: 100,
-        y: 100
-    };
+	private imageOverlay!: Leaflet.ImageOverlay;
+	private currentBounds: IIndoorPosition = {
+		x: 100,
+		y: 100
+	};
 
-    constructor(
-        private readonly leaflet: typeof Leaflet,
-        nativeElement: HTMLElement,
-        backgroundImage?: HTMLImageElement,
-        private defaultIconConfig: MarkerIconSizeOptions = {
-            origin: [0, 16],
-            size: 32
-        }
-    ) {
+	constructor(
+		private readonly leaflet: typeof Leaflet,
+		nativeElement: HTMLElement,
+		backgroundImage?: HTMLImageElement,
+		private defaultIconConfig: MarkerIconSizeOptions = {
+			origin: [0, 16],
+			size: 32
+		}
+	) {
+		this.leafletMap = this.leaflet.map(nativeElement, {
+			crs: this.leaflet.CRS.Simple,
+			center: [0, 0],
+			zoom: 0
+		});
 
-        this.leafletMap = this.leaflet.map(nativeElement, {
-            crs: this.leaflet.CRS.Simple,
-            center: [0, 0],
-            zoom: 0,
-        });
+		this.createBackgroundOverlay();
 
-        this.createBackgroundOverlay();
+		if (backgroundImage) {
+			this.updateBackgroundImage(backgroundImage);
+		}
+	}
 
-        if (backgroundImage) {
-            this.updateBackgroundImage(backgroundImage);
-        }
-    }
+	public addMarker(marker: T): IndoorMapMarker {
+		const { id } = marker;
+		const newMarker = new IndoorMapMarker(this.leaflet, marker, {
+			iconConfig: this.defaultIconConfig
+		});
 
-    public updateIconSize(iconSize: number, origin: [number, number] = [iconSize / 2, iconSize / 2]): void {
-        this.defaultIconConfig.size = iconSize;
-        this.defaultIconConfig.origin = origin;
-        this.updateExistingMarkersIconsSizes(iconSize, origin);
-    }
+		newMarker.putIn(this.leafletMap);
 
-    public addMarker(marker: T): IIndoorMapMarkerEntity & T {
-        const { x, y, id, icon, type, name } = marker;
-        const newLeafletMarker = new this.leaflet.Marker({
-            lat: x,
-            lng: y
-        });
-        const iconConfig: MarkerIconOptions = {
-            ...this.defaultIconConfig,
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            iconUrl: icon || this.leaflet.Icon.Default.imagePath!
-        }
-        newLeafletMarker.setIcon(generateIcon(this.leaflet, iconConfig));
-        this.leafletMap.addLayer(newLeafletMarker);
-        const newMarker = new IndoorMapMarker(
-            newLeafletMarker, 
-            () => this.removeMarker(id), 
-            type, 
-            id, 
-            name,
-            x,
-            y
-        );
-        this.markersMap.set(id, {markerEntity: newMarker, leafletMarker: newLeafletMarker});
-        const entityMarker = newMarker as IIndoorMapMarkerEntity;
-        return entityMarker as T & IIndoorMapMarkerEntity;
-    }
+		this.markersMap.set(id, newMarker);
 
-    public removeMarker(markerOrMarkerId: T['id'] | IIndoorMapMarker): void {
-        const markerId = typeof markerOrMarkerId === 'object' ? markerOrMarkerId.id : markerOrMarkerId;
-        const marker = this.markersMap.get(markerId);
-        if (marker) {
-            this.markersMap.delete(markerId);
-            marker.leafletMarker.off();
-            marker.leafletMarker.remove();
-        }
-    }
+		return newMarker;
+	}
 
-    public setBounds({x: minMaxX, y: minMaxY}: IIndoorPosition, maxPosCoordinates?: IIndoorPosition): void {
-        if (!minMaxX || !minMaxY || isNaN(minMaxX) || isNaN(minMaxY)) {
-            return
-        }
-        let minPos: Leaflet.LatLngTuple;
-        let maxPos: Leaflet.LatLngTuple;
-        if (maxPosCoordinates) {
-            minPos = [minMaxY, minMaxX];
-            maxPos = [maxPosCoordinates.y, maxPosCoordinates.x];
-        } else {
-            minPos = [0, 0];
-            maxPos = [minMaxY, minMaxX];
-        }
-        const bounds = this.leaflet.latLngBounds([minPos, maxPos]);
-        this.currentBounds = {
-            x: minMaxX,
-            y: minMaxY
-        };
-        this.imageOverlay.setBounds(bounds);
-        this.leafletMap.fitBounds(bounds);
-    }
+	public removeMarker(markerOrMarkerId: T['id'] | T): void {
+		const markerId = typeof markerOrMarkerId === 'object' ? markerOrMarkerId.id : markerOrMarkerId;
 
-    public getBounds(): IIndoorPosition {
-        return this.currentBounds;
-    }
+		const marker = this.markersMap.get(markerId);
 
-    public updateBackgroundImage(newImage: HTMLImageElement): IIndoorPosition;
-    public async updateBackgroundImage(backgroundImage: string): Promise<IIndoorPosition>;
-    public updateBackgroundImage(newImage: HTMLImageElement | string): Promise<IIndoorPosition> | IIndoorPosition {
-        if (typeof newImage === 'string') {
-            return loadImage(newImage).then(image => this.processBackgroundImage(image));
-        }
-        return this.processBackgroundImage(newImage);
-    }
+		if (!marker) return;
 
-    public destroy(): void {
-        this.leafletMap.off();
-        this.leafletMap.remove();
-    }
+		this.markersMap.delete(markerId);
+		marker.destroy();
+	}
 
-    private processBackgroundImage(image: HTMLImageElement): IIndoorPosition {
-        const imageUrl = image.src;
-        const imageOverlayElement = this.imageOverlay.getElement();
-        if (imageUrl && imageOverlayElement) {
-            imageOverlayElement.src = imageUrl;
-            const newImageAspectRatio = imageOverlayElement.naturalWidth / imageOverlayElement.naturalHeight;
-            const newHeight = this.currentBounds.x / newImageAspectRatio;
-            this.setBounds({
-                ...this.currentBounds,
-                y: newHeight
-            });
-        }
-        return this.getBounds();
-    }
+	public setBounds(
+		{ x: minMaxX, y: minMaxY }: IIndoorPosition,
+		maxPosCoordinates?: IIndoorPosition
+	): void {
+		if (!minMaxX || !minMaxY || isNaN(minMaxX) || isNaN(minMaxY)) {
+			return;
+		}
+		let minPos: Leaflet.LatLngTuple;
+		let maxPos: Leaflet.LatLngTuple;
+		if (maxPosCoordinates) {
+			minPos = [minMaxY, minMaxX];
+			maxPos = [maxPosCoordinates.y, maxPosCoordinates.x];
+		} else {
+			minPos = [0, 0];
+			maxPos = [minMaxY, minMaxX];
+		}
+		const bounds = this.leaflet.latLngBounds([minPos, maxPos]);
+		this.currentBounds = {
+			x: minMaxX,
+			y: minMaxY
+		};
+		this.imageOverlay.setBounds(bounds);
+		this.leafletMap.fitBounds(bounds);
+	}
 
-    private createBackgroundOverlay() {
-        this.imageOverlay = this.leaflet.imageOverlay('', [[0, 0], [100, 100]]);
-        this.imageOverlay.addTo(this.leafletMap);
-    }
+	public getBounds(): IIndoorPosition {
+		return this.currentBounds;
+	}
 
-    private updateExistingMarkersIconsSizes(iconSize: number, origin: [number, number] = [iconSize / 2, iconSize / 2]): void {
-        this.markersMap.forEach(({leafletMarker}) => {
-            const markerIcon = leafletMarker.getIcon();
-            const iconOptions = markerIcon.options;
-            iconOptions.iconSize = [iconSize, iconSize];
-            iconOptions.iconAnchor = origin;
-            leafletMarker.setIcon(markerIcon);
-        });
-    }
-    
+	public updateBackgroundImage(newImage: HTMLImageElement): IIndoorPosition;
+	public async updateBackgroundImage(backgroundImage: string): Promise<IIndoorPosition>;
+	public updateBackgroundImage(
+		newImage: HTMLImageElement | string
+	): Promise<IIndoorPosition> | IIndoorPosition {
+		if (typeof newImage === 'string') {
+			return loadImage(newImage).then((image) => this.processBackgroundImage(image));
+		}
+		return this.processBackgroundImage(newImage);
+	}
+
+	public destroy(): void {
+		this.leafletMap.off();
+		this.leafletMap.remove();
+	}
+
+	private processBackgroundImage(image: HTMLImageElement): IIndoorPosition {
+		const imageUrl = image.src;
+		const imageOverlayElement = this.imageOverlay.getElement();
+		if (imageUrl && imageOverlayElement) {
+			imageOverlayElement.src = imageUrl;
+			const newImageAspectRatio =
+				imageOverlayElement.naturalWidth / imageOverlayElement.naturalHeight;
+			const newHeight = this.currentBounds.x / newImageAspectRatio;
+			this.setBounds({
+				...this.currentBounds,
+				y: newHeight
+			});
+		}
+		return this.getBounds();
+	}
+
+	private createBackgroundOverlay() {
+		this.imageOverlay = this.leaflet.imageOverlay('', [
+			[0, 0],
+			[100, 100]
+		]);
+		this.imageOverlay.addTo(this.leafletMap);
+	}
 }
