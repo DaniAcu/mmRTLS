@@ -23,7 +23,7 @@ import {PositionRepository} from '../repositories';
 export class PositionController {
   constructor(
     @repository(PositionRepository)
-    public positionRepository : PositionRepository,
+    public positionRepository: PositionRepository,
   ) {}
 
   @post('/positions')
@@ -52,9 +52,7 @@ export class PositionController {
     description: 'Position model count',
     content: {'application/json': {schema: CountSchema}},
   })
-  async count(
-    @param.where(Position) where?: Where<Position>,
-  ): Promise<Count> {
+  async count(@param.where(Position) where?: Where<Position>): Promise<Count> {
     return this.positionRepository.count(where);
   }
 
@@ -106,7 +104,8 @@ export class PositionController {
   })
   async findById(
     @param.path.number('positionId') id: number,
-    @param.filter(Position, {exclude: 'where'}) filter?: FilterExcludingWhere<Position>
+    @param.filter(Position, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Position>,
   ): Promise<Position> {
     return this.positionRepository.findById(id, filter);
   }
@@ -144,7 +143,9 @@ export class PositionController {
   @response(204, {
     description: 'Position DELETE success',
   })
-  async deleteById(@param.path.number('positionId') positionId: number): Promise<void> {
+  async deleteById(
+    @param.path.number('positionId') positionId: number,
+  ): Promise<void> {
     await this.positionRepository.deleteById(positionId);
   }
 }

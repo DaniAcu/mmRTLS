@@ -15,16 +15,13 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {
-  NavDev,
-  Position,
-} from '../models';
+import {NavDev, Position} from '../models';
 import {NavDevRepository} from '../repositories';
 
 export class NavDevPositionController {
   constructor(
     @repository(NavDevRepository) protected navDevRepository: NavDevRepository,
-  ) { }
+  ) {}
 
   @get('/nav-devs/{navId}/positions', {
     responses: {
@@ -61,11 +58,12 @@ export class NavDevPositionController {
           schema: getModelSchemaRef(Position, {
             title: 'NewPositionInNavDev',
             exclude: ['positionId'],
-            optional: ['navId']
+            optional: ['navId'],
           }),
         },
       },
-    }) position: Omit<Position, 'positionId'>,
+    })
+    position: Omit<Position, 'positionId'>,
   ): Promise<Position> {
     return this.navDevRepository.positions(navId).create(position);
   }
@@ -88,7 +86,8 @@ export class NavDevPositionController {
       },
     })
     position: Partial<Position>,
-    @param.query.object('where', getWhereSchemaFor(Position)) where?: Where<Position>,
+    @param.query.object('where', getWhereSchemaFor(Position))
+    where?: Where<Position>,
   ): Promise<Count> {
     return this.navDevRepository.positions(navId).patch(position, where);
   }
@@ -103,7 +102,8 @@ export class NavDevPositionController {
   })
   async delete(
     @param.path.number('navId') navId: number,
-    @param.query.object('where', getWhereSchemaFor(Position)) where?: Where<Position>,
+    @param.query.object('where', getWhereSchemaFor(Position))
+    where?: Where<Position>,
   ): Promise<Count> {
     return this.navDevRepository.positions(navId).delete(where);
   }

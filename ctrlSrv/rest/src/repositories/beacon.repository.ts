@@ -8,9 +8,7 @@ export class BeaconRepository extends DefaultCrudRepository<
   typeof Beacon.prototype.beaconId,
   BeaconRelations
 > {
-  constructor(
-    @inject('datasources.db') dataSource: DbDataSource,
-  ) {
+  constructor(@inject('datasources.db') dataSource: DbDataSource) {
     super(Beacon, dataSource);
   }
 }
