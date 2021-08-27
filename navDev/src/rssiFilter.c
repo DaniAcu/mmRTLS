@@ -28,7 +28,7 @@ static int8_t rssiFilter_LPF1( rssiFilter_t *f, int8_t s )
     
     u = (float)s;
     
-    if( f->init ) {
+    if ( f->init ) {
         f->fo_1 = u;
         f->init = 0u;
     }
@@ -44,7 +44,7 @@ static int8_t rssiFilter_LPF2( rssiFilter_t *f, int8_t s )
     
     u = (float)s;
     
-    if( f->init ) {
+    if ( f->init ) {
         f->fo_1 = u;
         f->fo_2 = u;
         f->u_1 = u;
@@ -64,7 +64,7 @@ static int8_t rssiFilter_RMOW( rssiFilter_t *f, int8_t s )
 {
     int i, m, fo;
     
-    if( f->init ) {
+    if ( f->init ) {
         for( i = 0; i< RSSI_FILTER_WINDOW_SIZE; i++ ){
             f->w[ i ] = s;
         }
@@ -79,7 +79,7 @@ static int8_t rssiFilter_RMOW( rssiFilter_t *f, int8_t s )
     }
         
     f->w[ 0 ] = s; 
-    if( abs( f->m - s )  > (int)( f->alfa*abs( f->m ) ) ) { /*is it an outlier?*/
+    if ( abs( f->m - s )  > (int)( f->alfa*abs( f->m ) ) ) { /*is it an outlier?*/
         f->w[ 0 ] = (int8_t)f->m; /*replace the outlier with the dynamic median*/
     }
     f->m = (int8_t)( ( m + f->w[ 0 ] ) / RSSI_FILTER_WINDOW_SIZE );  /*compute new mean for next iteration*/
@@ -97,13 +97,15 @@ int rssiFilterInit( rssiFilter_t *f , rssiFilterMode_t mode, float alfa )
         f->mode = mode;
         rssiFilterReset( f );
         
-        switch ( mode ) {
+        switch( mode ){
             case RSSI_FILTER_MODE_LPF1:
                 f->filtFcn = &rssiFilter_LPF1;
+                f->alfa = alfa;
                 break;
             case RSSI_FILTER_MODE_LPF2:
                 {
                     float aa, p1, c;
+                    f->alfa = alfa;
                     aa = alfa*alfa;
                     p1 = sqrtf( 2.0f*alfa );
                     c = 1.0 + p1 + aa;
@@ -115,6 +117,7 @@ int rssiFilterInit( rssiFilter_t *f , rssiFilterMode_t mode, float alfa )
                 f->filtFcn = &rssiFilter_LPF2;
                 break;
             case RSSI_FILTER_MODE_RMOW:
+                f->alfa = 1.0f - alfa; /*normalize alfa*/
                 f->filtFcn = &rssiFilter_RMOW;
                 break;
             default:
@@ -129,8 +132,8 @@ int rssiFilterInit( rssiFilter_t *f , rssiFilterMode_t mode, float alfa )
 int8_t rssiFilterPerform( rssiFilter_t *f, int8_t s )
 {
     int8_t out = s;
-    if( NULL != f ) {
-        if( NULL != f->filtFcn ) {
+    if ( NULL != f ) {
+        if ( NULL != f->filtFcn ) {
             out = f->filtFcn( f, s );
         }
     }
