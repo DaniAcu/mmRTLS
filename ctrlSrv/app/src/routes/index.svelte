@@ -1,3 +1,39 @@
+<script lang="ts" context="module">
+	import type { LoadInput, LoadOutput } from '@sveltejs/kit';
+	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
+
+	const UPLOAD_MAP_ROUTE = '/upload-map';
+
+	export const load: (
+		input: LoadInput
+	) => Promise<
+		LoadOutput<{
+			mapSize: IIndoorPosition;
+			backgroundImage: string;
+		}>
+	> = async () => {
+		const config = mapMaxPosition.value;
+		const backgroundImage = mapBackgroundImage.value;
+		const configIsLoaded = !!config;
+		return new Promise((resolve) => {
+			resolve(
+				configIsLoaded && !!backgroundImage
+					? {
+							status: 200,
+							props: {
+								mapSize: config as IIndoorPosition,
+								backgroundImage
+							}
+					  }
+					: {
+							status: 303,
+							redirect: UPLOAD_MAP_ROUTE
+					  }
+			);
+		});
+	};
+</script>
+
 <script lang="ts">
 	import Marker from '../components/Map/Marker.svelte';
 	import Map from '../components/Map/Map.svelte';
@@ -5,10 +41,6 @@
 	import NavDeviceDetails from '../views/NavDeviceDetails/NavDeviceDetails.svelte';
 	import { onMount$ } from '../utils/lifecycles';
 	import { getMarkers } from '../streams/markers';
-	import { audit, filter, Subject, tap } from 'rxjs';
-	import type { Observable } from 'rxjs';
-	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
-	import { goto } from '$app/navigation';
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';
 	import {
 		getBeaconClicked,
@@ -16,7 +48,8 @@
 		markerSubject
 	} from '$src/streams/markers-interactions';
 
-	const UPLOAD_MAP_ROUTE = '/upload-map';
+	export let mapSize: IIndoorPosition;
+	export let backgroundImage: string;
 
 	const markers$ = onMount$.pipe(getMarkers);
 
@@ -27,32 +60,10 @@
 		const id = e.detail;
 		markerSubject.next(id);
 	};
-
-	const navigateToMapSetup = () => {
-		goto(UPLOAD_MAP_ROUTE);
-	};
-
-	const mapUpdated = new Subject<void>();
-
-	const backgroundImage = mapBackgroundImage;
-
-	const mapDimensions = (mapMaxPosition as Observable<IIndoorPosition>).pipe(
-		tap((dimensions) => {
-			if (!dimensions) {
-				navigateToMapSetup();
-			}
-		}),
-		filter((dimensions) => !!dimensions),
-		audit(() => mapUpdated)
-	);
 </script>
 
 <div class="container">
-	<Map
-		backgroundImage={$backgroundImage}
-		mapSize={$mapDimensions}
-		on:mapUpdate={() => mapUpdated.next()}
-	>
+	<Map {backgroundImage} {mapSize} editMode={false}>
 		{#each $markers$ as { x, y, id, icon } (id)}
 			<Marker {x} {y} {id} {icon} on:click={onMarkerClick} />
 		{/each}
