@@ -5,7 +5,8 @@
 	import NavDeviceDetails from '../views/NavDeviceDetails/NavDeviceDetails.svelte';
 	import { onMount$ } from '../utils/lifecycles';
 	import { getMarkers } from '../streams/markers';
-	import { audit, filter, Observable, Subject, tap } from 'rxjs';
+	import { audit, filter, Subject, tap } from 'rxjs';
+	import type { Observable } from 'rxjs';
 	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
 	import { goto } from '$app/navigation';
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';

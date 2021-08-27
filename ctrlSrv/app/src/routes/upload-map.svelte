@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import TextField from 'smelte/src/components/TextField';
 
-	import { NEVER, Observable, Subject, switchMap, takeUntil, tap } from 'rxjs';
+	import { NEVER, Subject, switchMap, takeUntil, tap } from 'rxjs';
+	import type { Observable } from 'rxjs';
 
 	import Map from '../components/Map/Map.svelte';
 	import Button from 'smelte/src/components/Button';

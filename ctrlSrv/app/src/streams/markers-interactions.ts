@@ -1,4 +1,5 @@
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { filter, map, withLatestFrom } from 'rxjs/operators';
 import type { NavDevice } from 'src/interfaces/nav-device.interface';
 import type { Beacon } from '../interfaces/beacon.interface';

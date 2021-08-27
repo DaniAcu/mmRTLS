@@ -1,7 +1,9 @@
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import type { Beacon } from '$src/interfaces/beacon.interface';
-import { MarkerOf, MarkerType } from './marker.types';
+import { MarkerType } from './marker.types';
+import type { MarkerOf } from './marker.types';
 
 export const BEACON_ICON_URL = './static/markers/antenna.png';
 
