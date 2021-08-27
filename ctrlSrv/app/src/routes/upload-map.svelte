@@ -53,11 +53,15 @@
 			})
 		);
 	};
-
-	const handleMapUpdate = (event: CustomEvent<IndoorMapEvents['mapUpdate']>) => {
-		const { x, y } = event.detail as any;
-		xDimension = x.toString();
+  
+  const updateInternalPositions = ({x, y}: IIndoorPosition) => {
+    	xDimension = x.toString();
 		yDimension = y.toString();
+  };
+
+	const handleMapUpdate = (event: CustomEvent<IndoorMapEvents['boundsUpdate']>) => {
+		const position = event.detail;
+		updateInternalPositions(position);
 	};
 
 	const saveMap = () => {
