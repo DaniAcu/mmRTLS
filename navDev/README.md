@@ -4,7 +4,8 @@ FreeRTOS based implementation of a Navigation device to run in ESP based devices
 By setting the device family on the IDF, the build options will change to manage the available modes.
 
 # Main components
-![image](https://user-images.githubusercontent.com/5400635/116485484-b82a3500-a861-11eb-9d43-a35ba54991ec.png)
+![image](https://user-images.githubusercontent.com/11412210/131554192-e7a0d845-2f40-4ef9-a8d7-0b2eeb190ad4.png)
+
 
 Scanner: 
 - Starts the wifi promiscuous listening mode
