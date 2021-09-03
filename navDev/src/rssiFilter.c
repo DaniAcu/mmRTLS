@@ -97,7 +97,7 @@ int rssiFilterInit( rssiFilter_t *f , rssiFilterMode_t mode, float alfa )
         f->mode = mode;
         rssiFilterReset( f );
         
-        switch( mode ){
+        switch ( mode ) {
             case RSSI_FILTER_MODE_LPF1:
                 f->filtFcn = &rssiFilter_LPF1;
                 f->alfa = alfa;
