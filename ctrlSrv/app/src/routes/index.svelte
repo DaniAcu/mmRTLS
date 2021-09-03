@@ -51,6 +51,7 @@
 		markerSubject
 	} from '$src/streams/markers-interactions';
 	import { menuActions } from '$src/components/Menu/menu.stream';
+	import type { Marker as IMarker } from '$src/streams/marker.types';
 
 	export let mapSize: IIndoorPosition;
 	export let backgroundImage: string;
@@ -60,8 +61,8 @@
 	const beaconsMarkerClicked$ = getBeaconClicked(markers$);
 	const navDeviceMarkerClicked$ = getNavDeviceClicked(markers$);
 
-	const onMarkerClick = (e: CustomEvent<string>) => {
-		const id = e.detail;
+	const onMarkerClick = (e: CustomEvent<{ id: IMarker['id'] }>) => {
+		const { id } = e.detail;
 		markerSubject.next(id);
 	};
 

@@ -17,33 +17,26 @@
 	export let draggable = false;
 
 	const map = MapContext.get();
-	let markerEntity: IndoorMapMarker;
+	let marker: IndoorMapMarker;
+
+	type MarkerEventData<T> = { id: Marker['id'] } & T;
 
 	interface MarkerEvents {
-		click: string;
-		drag: {
-			id: string;
-			position: {
-				x: number;
-				y: number;
-			};
-		};
+		click: MarkerEventData<unknown>;
+		drag: MarkerEventData<{ position: Position }>;
 	}
 
 	const dispatch = createEventDispatcher<MarkerEvents>();
 
-	const onClick = (id: Marker['id']) => dispatch('click', id);
-	const onDrag = (id: Marker['id'], position: Position) => {
-		dispatch('drag', { id, position });
-	};
-
 	onMount(() => {
-		markerEntity = map.addMarker({ x, y, id, icon, type, onClick, onDrag }, { draggable });
+		marker = map.addMarker({ x, y, id, icon, type }, { draggable });
+		marker.on('click', ({ id }) => dispatch('click', { id }));
+		marker.on('drag', ({ id, x, y }) => dispatch('drag', { id, position: { x, y } }));
 	});
 
 	$: {
-		if (!isNaN(x) && !isNaN(y) && markerEntity) {
-			markerEntity.setPosition({ x, y });
+		if (!isNaN(x) && !isNaN(y) && marker) {
+			marker.setPosition({ x, y });
 		}
 	}
 

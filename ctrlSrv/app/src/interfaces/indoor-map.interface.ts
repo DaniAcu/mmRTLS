@@ -1,10 +1,10 @@
-import type LeafletLib from 'leaflet';
+import type { MarkerOptions as LeafletMarkerOptions } from 'leaflet';
 import type { IndoorMapMarker } from '$src/components/Map/indoor-map-marker.model';
 import type { Marker } from '$src/streams/marker.types';
 import type { IIndoorPosition } from './position.interface';
 import type { MarkerIconSizeOptions } from './marker-icon.interface';
 
-export interface MarkerConfig extends Omit<LeafletLib.MarkerOptions, 'icon'> {
+export interface MarkerConfig extends Omit<LeafletMarkerOptions, 'icon'> {
 	iconConfig: Partial<MarkerIconSizeOptions>;
 }
 

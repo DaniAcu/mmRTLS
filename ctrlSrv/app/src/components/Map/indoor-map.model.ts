@@ -1,25 +1,24 @@
+import type * as L from 'leaflet';
+import Leaflet from './leaflet/leaflet';
 import type { IConfigurableIndoorMap, MarkerConfig } from '$src/interfaces/indoor-map.interface';
 import type { IIndoorPosition } from '$src/interfaces/position.interface';
-import type * as Leaflet from 'leaflet';
 import type { MarkerIconSizeOptions } from '$src/interfaces/marker-icon.interface';
 import { IndoorMapMarker } from './indoor-map-marker.model';
 import { loadImage } from '../../utils/load-image.function';
-import type { Marker, MarkerEvents } from '$src/streams/marker.types';
+import type { Marker } from '$src/streams/marker.types';
 
-type InteractiveMarker = Marker & MarkerEvents;
-
-export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndoorMap<T> {
-	private readonly leafletMap: Leaflet.Map;
+export class IndoorMap<T extends Marker> implements IConfigurableIndoorMap<T> {
+	private readonly leaflet = Leaflet.get();
+	private readonly leafletMap: L.Map;
 	private readonly markersMap: Map<T['id'], IndoorMapMarker> = new Map();
 
-	private imageOverlay!: Leaflet.ImageOverlay;
+	private imageOverlay!: L.ImageOverlay;
 	private currentBounds: IIndoorPosition = {
 		x: 100,
 		y: 100
 	};
 
 	constructor(
-		private readonly leaflet: typeof Leaflet,
 		nativeElement: HTMLElement,
 		backgroundImage?: HTMLImageElement,
 		private defaultIconConfig: MarkerIconSizeOptions = {
@@ -49,7 +48,7 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 
 	public addMarker(marker: T, config?: Partial<MarkerConfig>): IndoorMapMarker {
 		const { id } = marker;
-		const newMarker = new IndoorMapMarker(this.leaflet, marker, {
+		const newMarker = new IndoorMapMarker(marker, {
 			...config,
 			iconConfig: this.defaultIconConfig
 		});
@@ -79,8 +78,8 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		if (!minMaxX || !minMaxY || isNaN(minMaxX) || isNaN(minMaxY)) {
 			return;
 		}
-		let minPos: Leaflet.LatLngTuple;
-		let maxPos: Leaflet.LatLngTuple;
+		let minPos: L.LatLngTuple;
+		let maxPos: L.LatLngTuple;
 		if (maxPosCoordinates) {
 			minPos = [minMaxY, minMaxX];
 			maxPos = [maxPosCoordinates.y, maxPosCoordinates.x];
@@ -154,7 +153,7 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 	}
 
 	public getCenter(): IIndoorPosition {
-		const { lat, lng } = this.leafletMap.getCenter();
-		return { x: lat, y: lng };
+		const { lat, lng } = this.imageOverlay.getBounds().getCenter();
+		return { x: lng, y: lat };
 	}
 }
