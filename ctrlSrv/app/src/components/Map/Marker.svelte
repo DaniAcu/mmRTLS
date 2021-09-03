@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MarkerType } from '$src/streams/marker.types';
-	import type { Marker } from '$src/streams/marker.types';
+	import type { Marker, Position } from '$src/streams/marker.types';
 
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import type { IndoorMapMarker } from './indoor-map-marker.model';
@@ -33,7 +33,7 @@
 	const dispatch = createEventDispatcher<MarkerEvents>();
 
 	const onClick = (id: Marker['id']) => dispatch('click', id);
-	const onDrag = (id: Marker['id'], position: Pick<Marker, 'x' | 'y'>) => {
+	const onDrag = (id: Marker['id'], position: Position) => {
 		dispatch('drag', { id, position });
 	};
 
