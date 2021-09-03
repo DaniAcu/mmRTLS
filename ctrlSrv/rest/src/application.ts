@@ -4,12 +4,12 @@ import {
   RestExplorerBindings,
   RestExplorerComponent,
 } from '@loopback/rest-explorer';
-import multer from 'multer';     
+import multer from 'multer';
 import {RepositoryMixin} from '@loopback/repository';
 import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
-import{FILE_UPLOAD_SERVICE, STORAGE_DIRECTORY} from './keys'; 
+import {FILE_UPLOAD_SERVICE, STORAGE_DIRECTORY} from './keys';
 import {MySequence} from './sequence';
 
 export {ApplicationConfig};
@@ -48,8 +48,8 @@ export class RtlsControlServerApplication extends BootMixin(
   }
 
   /**
-  * Configure `multer` options for file upload
-  */
+   * Configure `multer` options for file upload
+   */
   protected configureFileUpload(destination?: string) {
     // Upload files to `dist/.sandbox` by default
     destination = destination ?? path.join(__dirname, '../.sandbox');

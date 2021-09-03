@@ -1,29 +1,37 @@
 <script lang="ts" context="module">
-  import type { LoadInput, LoadOutput } from "@sveltejs/kit";
-  import { mapBackgroundImage, mapMaxPosition } from "../store/map-background-image.store";
+	import type { LoadInput, LoadOutput } from '@sveltejs/kit';
+	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
 
-  const UPLOAD_MAP_ROUTE = '/upload-map';
+	const UPLOAD_MAP_ROUTE = '/upload-map';
 
-  export const load: (input: LoadInput) => Promise<LoadOutput<{
-    mapSize: IIndoorPosition;
-    backgroundImage: string;
-  }>> = async () => {
-    const config = mapMaxPosition.value;
-    const backgroundImage = mapBackgroundImage.value;
-    const configIsLoaded = !!config;
+	export const load: (
+		input: LoadInput
+	) => Promise<
+		LoadOutput<{
+			mapSize: IIndoorPosition;
+			backgroundImage: string;
+		}>
+	> = async () => {
+		const config = mapMaxPosition.value;
+		const backgroundImage = mapBackgroundImage.value;
+		const configIsLoaded = !!config;
 		return new Promise((resolve) => {
-      resolve(configIsLoaded && !!backgroundImage ? {
-        status: 200,
-        props: {
-          mapSize: config as IIndoorPosition,
-          backgroundImage
-        }
-      } : {
-        status: 303,
-        redirect: UPLOAD_MAP_ROUTE
-      });
-    })
-	}
+			resolve(
+				configIsLoaded && !!backgroundImage
+					? {
+							status: 200,
+							props: {
+								mapSize: config as IIndoorPosition,
+								backgroundImage
+							}
+					  }
+					: {
+							status: 303,
+							redirect: UPLOAD_MAP_ROUTE
+					  }
+			);
+		});
+	};
 </script>
 
 <script lang="ts">
@@ -40,8 +48,8 @@
 		markerSubject
 	} from '$src/streams/markers-interactions';
 
-  export let mapSize: IIndoorPosition;
-  export let backgroundImage: string;
+	export let mapSize: IIndoorPosition;
+	export let backgroundImage: string;
 
 	const markers$ = onMount$.pipe(getMarkers);
 
@@ -55,11 +63,7 @@
 </script>
 
 <div class="container">
-	<Map
-		{backgroundImage}
-		{mapSize}
-		editMode={false}
-	>
+	<Map {backgroundImage} {mapSize} editMode={false}>
 		{#each $markers$ as { x, y, id, icon } (id)}
 			<Marker {x} {y} {id} {icon} on:click={onMarkerClick} />
 		{/each}

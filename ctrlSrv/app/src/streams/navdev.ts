@@ -1,7 +1,8 @@
 import { MarkerType } from './marker.types';
 import type { MarkerOf } from './marker.types';
 import type { NavDevice } from 'src/interfaces/nav-device.interface';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
+import type { Observable } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 export type NavDeviceInfo = Omit<NavDevice, 'navId' | 'positions'>;

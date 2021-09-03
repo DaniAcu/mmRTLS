@@ -8,9 +8,7 @@ export class PositionRepository extends DefaultCrudRepository<
   typeof Position.prototype.positionId,
   PositionRelations
 > {
-  constructor(
-    @inject('datasources.db') dataSource: DbDataSource,
-  ) {
+  constructor(@inject('datasources.db') dataSource: DbDataSource) {
     super(Position, dataSource);
   }
 }

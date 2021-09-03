@@ -24,7 +24,7 @@ export class Beacon extends Entity {
     type: 'number',
     dataType: 'float',
     precision: 20,
-    scale: 5, 
+    scale: 5,
     generated: false,
     required: true,
   })
@@ -34,7 +34,7 @@ export class Beacon extends Entity {
     type: 'number',
     dataType: 'float',
     precision: 20,
-    scale: 5, 
+    scale: 5,
     generated: false,
     required: true,
   })
@@ -44,7 +44,7 @@ export class Beacon extends Entity {
     type: 'number',
     dataType: 'float',
     precision: 20,
-    scale: 5, 
+    scale: 5,
     generated: false,
     required: true,
   })

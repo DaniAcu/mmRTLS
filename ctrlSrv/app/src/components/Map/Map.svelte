@@ -18,7 +18,7 @@
 	const notifyMapUpdate = () => {
 		dispatch('mapUpdate');
 	};
-	
+
 	export let editMode = true;
 
 	let map: IndoorMap<Marker>;
@@ -26,7 +26,7 @@
 	$: {
 		map?.updateBackgroundImage(backgroundImage, editMode).then((newSize) => {
 			notifyMapUpdate();
-      		notifyBoundsUpdate(newSize);
+			notifyBoundsUpdate(newSize);
 		});
 	}
 
@@ -43,7 +43,7 @@
 
 	const updateMapBounds = (newBounds: IIndoorPosition) => {
 		if (isSamePosition(map.getBounds(), newBounds)) {
-		return;
+			return;
 		}
 		map?.setBounds(newBounds);
 		mapSize = newBounds;
@@ -56,7 +56,7 @@
 
 	onMount(async () => {
 		map = await createMap({ imageOverlay: backgroundImage, target: mapNode });
-    	notifyBoundsUpdate(map.getBounds());
+		notifyBoundsUpdate(map.getBounds());
 	});
 
 	onDestroy(() => {

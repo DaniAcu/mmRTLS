@@ -1,5 +1,5 @@
-import { Entity, model, property, belongsTo } from '@loopback/repository';
-import { NavDev } from '.';
+import {Entity, model, property, belongsTo} from '@loopback/repository';
+import {NavDev} from '.';
 
 @model()
 export class Position extends Entity {
@@ -14,7 +14,7 @@ export class Position extends Entity {
     type: 'number',
     dataType: 'float',
     precision: 20,
-    scale: 5, 
+    scale: 5,
     generated: false,
     required: true,
   })
@@ -24,7 +24,7 @@ export class Position extends Entity {
     type: 'number',
     dataType: 'float',
     precision: 20,
-    scale: 5, 
+    scale: 5,
     generated: false,
     required: true,
   })

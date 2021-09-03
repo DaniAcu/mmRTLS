@@ -23,7 +23,7 @@ import {NavDevRepository} from '../repositories';
 export class NavDevController {
   constructor(
     @repository(NavDevRepository)
-    public navDevRepository : NavDevRepository,
+    public navDevRepository: NavDevRepository,
   ) {}
 
   @post('/nav-devs')
@@ -52,9 +52,7 @@ export class NavDevController {
     description: 'NavDev model count',
     content: {'application/json': {schema: CountSchema}},
   })
-  async count(
-    @param.where(NavDev) where?: Where<NavDev>,
-  ): Promise<Count> {
+  async count(@param.where(NavDev) where?: Where<NavDev>): Promise<Count> {
     return this.navDevRepository.count(where);
   }
 
@@ -70,9 +68,7 @@ export class NavDevController {
       },
     },
   })
-  async find(
-    @param.filter(NavDev) filter?: Filter<NavDev>,
-  ): Promise<NavDev[]> {
+  async find(@param.filter(NavDev) filter?: Filter<NavDev>): Promise<NavDev[]> {
     return this.navDevRepository.find(filter);
   }
 
@@ -106,7 +102,8 @@ export class NavDevController {
   })
   async findById(
     @param.path.number('navId') navId: number,
-    @param.filter(NavDev, {exclude: 'where'}) filter?: FilterExcludingWhere<NavDev>
+    @param.filter(NavDev, {exclude: 'where'})
+    filter?: FilterExcludingWhere<NavDev>,
   ): Promise<NavDev> {
     return this.navDevRepository.findById(navId, filter);
   }

@@ -94,13 +94,22 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		return this.currentBounds;
 	}
 
-	public updateBackgroundImage(newImage: HTMLImageElement, useImageAspectRatio?: boolean): IIndoorPosition;
-	public async updateBackgroundImage(backgroundImage: string, useImageAspectRatio?: boolean): Promise<IIndoorPosition>;
 	public updateBackgroundImage(
-		newImage: HTMLImageElement | string, useImageAspectRatio = false
+		newImage: HTMLImageElement,
+		useImageAspectRatio?: boolean
+	): IIndoorPosition;
+	public async updateBackgroundImage(
+		backgroundImage: string,
+		useImageAspectRatio?: boolean
+	): Promise<IIndoorPosition>;
+	public updateBackgroundImage(
+		newImage: HTMLImageElement | string,
+		useImageAspectRatio = false
 	): Promise<IIndoorPosition> | IIndoorPosition {
 		if (typeof newImage === 'string') {
-			return loadImage(newImage).then((image) => this.processBackgroundImage(image, useImageAspectRatio));
+			return loadImage(newImage).then((image) =>
+				this.processBackgroundImage(image, useImageAspectRatio)
+			);
 		}
 		return this.processBackgroundImage(newImage, useImageAspectRatio);
 	}
@@ -110,7 +119,10 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		this.leafletMap.remove();
 	}
 
-	private processBackgroundImage(image: HTMLImageElement, useImageAspectRatio: boolean): IIndoorPosition {
+	private processBackgroundImage(
+		image: HTMLImageElement,
+		useImageAspectRatio: boolean
+	): IIndoorPosition {
 		const imageUrl = image.src;
 		const imageOverlayElement = this.imageOverlay.getElement();
 		if (imageUrl && imageOverlayElement) {

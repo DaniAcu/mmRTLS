@@ -23,7 +23,7 @@ import {BeaconRepository} from '../repositories';
 export class BeaconController {
   constructor(
     @repository(BeaconRepository)
-    public beaconRepository : BeaconRepository,
+    public beaconRepository: BeaconRepository,
   ) {}
 
   @post('/beacons')
@@ -52,9 +52,7 @@ export class BeaconController {
     description: 'Beacon model count',
     content: {'application/json': {schema: CountSchema}},
   })
-  async count(
-    @param.where(Beacon) where?: Where<Beacon>,
-  ): Promise<Count> {
+  async count(@param.where(Beacon) where?: Where<Beacon>): Promise<Count> {
     return this.beaconRepository.count(where);
   }
 
@@ -70,9 +68,7 @@ export class BeaconController {
       },
     },
   })
-  async find(
-    @param.filter(Beacon) filter?: Filter<Beacon>,
-  ): Promise<Beacon[]> {
+  async find(@param.filter(Beacon) filter?: Filter<Beacon>): Promise<Beacon[]> {
     return this.beaconRepository.find(filter);
   }
 
@@ -106,7 +102,8 @@ export class BeaconController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Beacon, {exclude: 'where'}) filter?: FilterExcludingWhere<Beacon>
+    @param.filter(Beacon, {exclude: 'where'})
+    filter?: FilterExcludingWhere<Beacon>,
   ): Promise<Beacon> {
     return this.beaconRepository.findById(id, filter);
   }
