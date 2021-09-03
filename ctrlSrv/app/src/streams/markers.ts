@@ -1,5 +1,6 @@
-import { map, BehaviorSubject, zip } from 'rxjs';
 import type { Observable } from 'rxjs';
+import { BehaviorSubject, zip } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { beacons$ } from './beacons';
 import { navDevices$ } from './navdev';
 import type { MarkerOf } from './marker.types';
@@ -9,12 +10,16 @@ import type { NavDeviceInfo } from './navdev';
 
 export type MarkerInfo = BeaconInfo | NavDeviceInfo;
 
-const markersSubject = new BehaviorSubject<MarkerOf<MarkerInfo>[]>([]);
+type Marker = MarkerOf<BeaconInfo> | MarkerOf<NavDeviceInfo>;
+
+export const markersSubject = new BehaviorSubject<Marker[]>([]);
+
+const flat = <T>(x: T[]) => x.flat();
 
 zip(beacons$, navDevices$)
 	.pipe(
 		poll(10000), // Polling interval is 10 seconds
-		map((x) => x.flat())
+		map(flat)
 	)
 	.subscribe((markers) => {
 		markersSubject.next(markers);

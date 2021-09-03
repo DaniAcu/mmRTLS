@@ -1,16 +1,11 @@
-import type { Marker, MarkerEvents } from '$src/streams/marker.types';
+import type { Marker, MarkerEvents, Position } from '$src/streams/marker.types';
 import type LeafletLib from 'leaflet';
 import type { MarkerIconSizeOptions } from '$src/interfaces/marker-icon.interface';
+import type { MarkerConfig } from '$src/interfaces/indoor-map.interface';
 
 type Leaflet = typeof LeafletLib;
 
-type Position = Pick<Marker, 'x' | 'y'>;
-
 type IconConfig = Partial<MarkerIconSizeOptions>;
-
-interface MarkerConfig extends Omit<LeafletLib.MarkerOptions, 'icon'> {
-	iconConfig: IconConfig;
-}
 
 export class IndoorMapMarker {
 	private leafletRef: LeafletLib.Marker;
@@ -20,7 +15,7 @@ export class IndoorMapMarker {
 		private marker: Marker & MarkerEvents,
 		config: Partial<MarkerConfig> = {}
 	) {
-		const { x: lat, y: lng, icon, onClick } = marker;
+		const { x: lat, y: lng, icon, onClick, onDrag } = marker;
 		const { iconConfig = {}, ...leafletMarkerConfig } = config;
 		const customIconConfigs = this.generateIconConfig(icon, iconConfig);
 
@@ -33,6 +28,13 @@ export class IndoorMapMarker {
 		);
 
 		if (onClick) this.leafletRef.on('click', () => onClick(marker.id));
+		if (onDrag)
+			this.leafletRef.on('dragend', () => {
+				const { lat, lng } = this.leafletRef.getLatLng();
+				const position = { x: lng, y: lat };
+				this.setMarkerPosition(position);
+				onDrag(marker.id, position);
+			});
 	}
 
 	public putIn(map: LeafletLib.Map): void {
@@ -40,9 +42,13 @@ export class IndoorMapMarker {
 	}
 
 	public setPosition({ x, y }: Position): void {
+		this.setMarkerPosition({ x, y });
+		this.leafletRef.setLatLng([y, x]);
+	}
+
+	private setMarkerPosition({ x, y }: Position): void {
 		this.marker.x = x;
 		this.marker.y = y;
-		this.leafletRef.setLatLng([y, x]);
 	}
 
 	private generateIconConfig(icon?: string, config?: IconConfig): LeafletLib.MarkerOptions {

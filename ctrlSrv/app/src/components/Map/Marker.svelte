@@ -14,19 +14,31 @@
 		icon: undefined
 	} as Marker;
 
+	export let draggable = false;
+
 	const map = MapContext.get();
 	let markerEntity: IndoorMapMarker;
 
 	interface MarkerEvents {
 		click: string;
+		drag: {
+			id: string;
+			position: {
+				x: number;
+				y: number;
+			};
+		};
 	}
 
 	const dispatch = createEventDispatcher<MarkerEvents>();
 
 	const onClick = (id: Marker['id']) => dispatch('click', id);
+	const onDrag = (id: Marker['id'], position: Pick<Marker, 'x' | 'y'>) => {
+		dispatch('drag', { id, position });
+	};
 
 	onMount(() => {
-		markerEntity = map.addMarker({ x, y, id, icon, type, onClick });
+		markerEntity = map.addMarker({ x, y, id, icon, type, onClick, onDrag }, { draggable });
 	});
 
 	$: {

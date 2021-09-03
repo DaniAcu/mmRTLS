@@ -1,15 +1,15 @@
 import { setContext, getContext } from 'svelte';
-import type { IIndoorMap } from '$src/interfaces/indoor-map.interface';
+import type { IndoorMap } from './indoor-map.model';
 import type { Marker, MarkerEvents } from '$src/streams/marker.types';
 
 const key = Symbol('map');
 
 type InteractiveMarker = Marker & MarkerEvents;
 
-type MapGetter<T extends InteractiveMarker> = () => IIndoorMap<T>;
+type MapGetter<T extends InteractiveMarker> = () => IndoorMap<T>;
 
 export const MapContext = {
-	get: <T extends InteractiveMarker>(): IIndoorMap<T> => getContext<MapGetter<T>>(key)(),
+	get: <T extends InteractiveMarker>(): IndoorMap<T> => getContext<MapGetter<T>>(key)(),
 	set: <T extends InteractiveMarker>(map: MapGetter<T>): void => setContext(key, map)
 };
 

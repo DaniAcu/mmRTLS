@@ -1,4 +1,4 @@
-import type { IConfigurableIndoorMap } from '$src/interfaces/indoor-map.interface';
+import type { IConfigurableIndoorMap, MarkerConfig } from '$src/interfaces/indoor-map.interface';
 import type { IIndoorPosition } from '$src/interfaces/position.interface';
 import type * as Leaflet from 'leaflet';
 import type { MarkerIconSizeOptions } from '$src/interfaces/marker-icon.interface';
@@ -30,8 +30,15 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		this.leafletMap = this.leaflet.map(nativeElement, {
 			crs: this.leaflet.CRS.Simple,
 			center: [0, 0],
-			zoom: 0
+			zoom: 0,
+			zoomControl: false
 		});
+
+		this.leaflet.control
+			.zoom({
+				position: 'bottomright'
+			})
+			.addTo(this.leafletMap);
 
 		this.createBackgroundOverlay();
 
@@ -40,9 +47,10 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 		}
 	}
 
-	public addMarker(marker: T): IndoorMapMarker {
+	public addMarker(marker: T, config?: Partial<MarkerConfig>): IndoorMapMarker {
 		const { id } = marker;
 		const newMarker = new IndoorMapMarker(this.leaflet, marker, {
+			...config,
 			iconConfig: this.defaultIconConfig
 		});
 
@@ -143,5 +151,10 @@ export class IndoorMap<T extends InteractiveMarker> implements IConfigurableIndo
 			[100, 100]
 		]);
 		this.imageOverlay.addTo(this.leafletMap);
+	}
+
+	public getCenter(): IIndoorPosition {
+		const { lat, lng } = this.leafletMap.getCenter();
+		return { x: lat, y: lng };
 	}
 }

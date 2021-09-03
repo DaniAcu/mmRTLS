@@ -4,6 +4,7 @@
 	import Button from 'smelte/src/components/Button';
 
 	export let isVisible = false;
+	export let fullHeight = false;
 
 	interface DialogEvents {
 		close: void;
@@ -16,7 +17,7 @@
 </script>
 
 {#if isVisible}
-	<Card.Card class="dialog over-map absolute bg-white w-full bottom-0">
+	<Card.Card class={`${fullHeight ? 'dialog' : ''} over-map absolute bg-white w-full bottom-0`}>
 		<div slot="text" class="p-2 flex flex-col h-full">
 			<nav>
 				<Button color="primary" icon="arrow_back_ios" text light flat on:click={onClose} />

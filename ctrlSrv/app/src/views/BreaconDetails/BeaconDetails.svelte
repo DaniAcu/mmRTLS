@@ -12,7 +12,7 @@
 	}
 </script>
 
-<Dialog isVisible={!!(beacon && beacon.data)} on:close={onClose}>
+<Dialog isVisible={!!(beacon && beacon.data)} fullHeight={true} on:close={onClose}>
 	<h3>{beacon?.data.name}</h3>
 	<section class="flex items-center gap-4 py-8">
 		<img class="h-16 w-16" src={beacon?.icon} alt="beacon icon" />

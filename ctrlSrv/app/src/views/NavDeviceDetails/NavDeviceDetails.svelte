@@ -11,7 +11,7 @@
 	}
 </script>
 
-<Dialog isVisible={!!navDevice} on:close={onClose}>
+<Dialog isVisible={!!navDevice} fullHeight={true} on:close={onClose}>
 	<h3>Nav device</h3>
 	<p>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec consectetur, nisl eget
