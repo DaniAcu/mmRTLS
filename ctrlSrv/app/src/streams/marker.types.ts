@@ -12,10 +12,13 @@ export interface Marker {
 	y: number;
 }
 
+export type Position = Pick<Marker, 'x' | 'y'>;
+
 export interface MarkerOf<T> extends Marker {
 	data: T;
 }
 
 export interface MarkerEvents {
 	onClick?(id: Marker['id']): void;
+	onDrag?(id: Marker['id'], postion: Pick<Marker, 'x' | 'y'>): void;
 }

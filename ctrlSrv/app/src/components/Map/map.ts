@@ -2,6 +2,7 @@ import type { Marker } from '$src/streams/marker.types';
 import type { MarkerIconSizeOptions } from 'src/interfaces/marker-icon.interface';
 import { loadImage } from '../../utils/load-image.function';
 import { IndoorMap } from './indoor-map.model';
+import Leaflet from './leaflet/leaflet';
 interface MapConfig {
 	imageOverlay: string;
 	target: HTMLElement;
@@ -14,7 +15,7 @@ export async function createMap({
 	target,
 	defaultIconConfig
 }: MapConfig): Promise<IndoorMap<Marker>> {
-	return Promise.all([import('leaflet'), loadImage(imageOverlay)]).then(
-		([{ default: L }, mapImage]) => new IndoorMap(L, target, mapImage, defaultIconConfig)
+	return Promise.all([Leaflet.resolve(), loadImage(imageOverlay)]).then(
+		([, mapImage]) => new IndoorMap(target, mapImage, defaultIconConfig)
 	);
 }

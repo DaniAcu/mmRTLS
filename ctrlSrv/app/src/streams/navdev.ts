@@ -14,6 +14,7 @@ export const navDevices$: Observable<MarkerOf<NavDeviceInfo>[]> = fromFetch(
 	}
 ).pipe(
 	catchError((err) => {
+		// eslint-disable-next-line no-console
 		console.error(err);
 		return of([]);
 	}),

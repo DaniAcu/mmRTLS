@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MarkerType } from '$src/streams/marker.types';
-	import type { Marker } from '$src/streams/marker.types';
+	import type { Marker, Position } from '$src/streams/marker.types';
 
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import type { IndoorMapMarker } from './indoor-map-marker.model';
@@ -14,24 +14,29 @@
 		icon: undefined
 	} as Marker;
 
+	export let draggable = false;
+
 	const map = MapContext.get();
-	let markerEntity: IndoorMapMarker;
+	let marker: IndoorMapMarker;
+
+	type MarkerEventData<T> = { id: Marker['id'] } & T;
 
 	interface MarkerEvents {
-		click: string;
+		click: MarkerEventData<unknown>;
+		drag: MarkerEventData<{ position: Position }>;
 	}
 
 	const dispatch = createEventDispatcher<MarkerEvents>();
 
-	const onClick = (id: Marker['id']) => dispatch('click', id);
-
 	onMount(() => {
-		markerEntity = map.addMarker({ x, y, id, icon, type, onClick });
+		marker = map.addMarker({ x, y, id, icon, type }, { draggable });
+		marker.on('click', ({ id }) => dispatch('click', { id }));
+		marker.on('drag', ({ id, x, y }) => dispatch('drag', { id, position: { x, y } }));
 	});
 
 	$: {
-		if (!isNaN(x) && !isNaN(y) && markerEntity) {
-			markerEntity.setPosition({ x, y });
+		if (!isNaN(x) && !isNaN(y) && marker) {
+			marker.setPosition({ x, y });
 		}
 	}
 

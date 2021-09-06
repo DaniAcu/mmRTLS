@@ -37,8 +37,11 @@
 <script lang="ts">
 	import Marker from '../components/Map/Marker.svelte';
 	import Map from '../components/Map/Map.svelte';
+	import { Menu } from '$src/components/Menu/Menu';
+	import type { MenuActions } from '$src/components/Menu/Menu';
 	import BeaconDetails from '../views/BreaconDetails/BeaconDetails.svelte';
 	import NavDeviceDetails from '../views/NavDeviceDetails/NavDeviceDetails.svelte';
+	import BeaconCreate from '../views/BeaconCreate/BeaconCreate.svelte';
 	import { onMount$ } from '../utils/lifecycles';
 	import { getMarkers } from '../streams/markers';
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';
@@ -47,6 +50,8 @@
 		getNavDeviceClicked,
 		markerSubject
 	} from '$src/streams/markers-interactions';
+	import { menuActions } from '$src/components/Menu/menu.stream';
+	import type { Marker as IMarker } from '$src/streams/marker.types';
 
 	export let mapSize: IIndoorPosition;
 	export let backgroundImage: string;
@@ -56,14 +61,20 @@
 	const beaconsMarkerClicked$ = getBeaconClicked(markers$);
 	const navDeviceMarkerClicked$ = getNavDeviceClicked(markers$);
 
-	const onMarkerClick = (e: CustomEvent<string>) => {
-		const id = e.detail;
+	const onMarkerClick = (e: CustomEvent<{ id: IMarker['id'] }>) => {
+		const { id } = e.detail;
 		markerSubject.next(id);
+	};
+
+	const onChange = (e: CustomEvent<MenuActions>) => {
+		menuActions.next(e.detail);
 	};
 </script>
 
 <div class="container">
 	<Map {backgroundImage} {mapSize} editMode={false}>
+		<Menu on:choose={onChange} />
+		<BeaconCreate />
 		{#each $markers$ as { x, y, id, icon } (id)}
 			<Marker {x} {y} {id} {icon} on:click={onMarkerClick} />
 		{/each}

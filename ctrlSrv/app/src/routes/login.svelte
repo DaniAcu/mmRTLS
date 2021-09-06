@@ -8,6 +8,8 @@
 
 	function onSubmit(e: Event) {
 		e.preventDefault();
+		// TODO: Should fetch to a login endpoint
+		// eslint-disable-next-line no-console
 		console.log({
 			email,
 			pass
