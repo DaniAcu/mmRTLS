@@ -1,6 +1,7 @@
 <script lang="ts" context="module">
 	import type { LoadInput, LoadOutput } from '@sveltejs/kit';
 	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
+	import { deleteBeacon as deleteBeaconRequest } from '$src/streams/beacons';
 
 	const UPLOAD_MAP_ROUTE = '/upload-map';
 
@@ -52,6 +53,8 @@
 	} from '$src/streams/markers-interactions';
 	import { menuActions } from '$src/components/Menu/menu.stream';
 	import type { Marker as IMarker } from '$src/streams/marker.types';
+	import type { BeaconDetailsEvent } from '$src/views/BreaconDetails/beacon-details.events';
+	import { deleteBeaconFromStore } from '$src/views/BeaconCreate/beacon.hook';
 
 	export let mapSize: IIndoorPosition;
 	export let backgroundImage: string;
@@ -69,6 +72,18 @@
 	const onChange = (e: CustomEvent<MenuActions>) => {
 		menuActions.next(e.detail);
 	};
+
+	const deleteBeacon = (event: CustomEvent<BeaconDetailsEvent['delete']>) => {
+		const beaconMarker = event.detail;
+		deleteBeaconRequest(beaconMarker.data.id).subscribe((success) => {
+			if (success) {
+				deleteBeaconFromStore(beaconMarker.id);
+			} else {
+				// eslint-disable-next-line no-console
+				console.error('Beacon deletion failed.');
+			}
+		});
+	};
 </script>
 
 <div class="container">
@@ -79,6 +94,6 @@
 			<Marker {x} {y} {id} {icon} on:click={onMarkerClick} />
 		{/each}
 	</Map>
-	<BeaconDetails beacon={$beaconsMarkerClicked$} />
+	<BeaconDetails beacon={$beaconsMarkerClicked$} on:delete={deleteBeacon} />
 	<NavDeviceDetails navDevice={$navDeviceMarkerClicked$} />
 </div>

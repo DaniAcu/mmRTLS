@@ -24,3 +24,7 @@ export const useSaveBeacon = (): (() => void) => {
 
 	return () => saveBeacon.next();
 };
+
+export const deleteBeaconFromStore: (beaconId: string) => void = (beaconId: string) => {
+	markersSubject.next(markersSubject.value.filter(marker => marker.id !== beaconId));
+};

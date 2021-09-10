@@ -1,6 +1,5 @@
 export enum MenuActions {
 	CREATE = 'CREATE',
-	DELETE = 'DELETE',
 	EDIT = 'EDIT'
 }
 

@@ -1,18 +1,17 @@
 import type { Observable } from 'rxjs';
 import { BehaviorSubject, of } from 'rxjs';
-import {
-	catchError,
-	map,
-	scan,
-	withLatestFrom,
-	filter,
-	switchMap,
-	startWith
-} from 'rxjs/operators';
+import { catchError, map, scan, filter, switchMap, switchMapTo } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import type { Beacon } from '$src/interfaces/beacon.interface';
 import { MarkerType } from './marker.types';
 import type { MarkerOf } from './marker.types';
+
+const DEFAULT_HEADERS = {
+	Accept: 'application/json',
+	'Content-Type': 'application/json'
+};
+
+const DELETE_BEACON_URL = 'http://localhost:3000/beacons/';
 
 /**
  * GET BEACONS
@@ -20,7 +19,9 @@ import type { MarkerOf } from './marker.types';
 
 export const BEACON_ICON_URL = './static/markers/antenna.png';
 
-export type BeaconInfo = Omit<Beacon, 'beaconId' | 'x' | 'y'>;
+export interface BeaconInfo extends Omit<Beacon, 'beaconId' | 'x' | 'y'> {
+	id: number;
+}
 
 export const beacons$: Observable<MarkerOf<BeaconInfo>[]> = fromFetch(
 	'http://localhost:3000/beacons',
@@ -48,24 +49,13 @@ const beaconReadyToSave$ = creatingBeacon.pipe(
 	filter(isValidBeacon)
 );
 
-const createdBeacon$ = saveBeacon.pipe(
-	withLatestFrom(beaconReadyToSave$),
-	map(([, beacon]) => beacon)
-);
-
-export const newBeaconMarkerCreated$ = createdBeacon$.pipe(
-	map(fromBeaconToMarker),
-	startWith(null)
-);
+const createdBeacon$ = saveBeacon.pipe(switchMapTo(beaconReadyToSave$));
 
 export const savedBeacon$ = createdBeacon$.pipe(switchMap(createBeacon));
 
 export function createBeacon(beacon: Omit<Beacon, 'beaconId'>): Observable<MarkerOf<BeaconInfo>> {
 	const requestConfig = {
-		headers: {
-			Accept: 'application/json',
-			'Content-Type': 'application/json'
-		},
+		headers: DEFAULT_HEADERS,
 		method: 'POST',
 		body: JSON.stringify(beacon)
 	};
@@ -97,6 +87,20 @@ function fromBeaconToMarker({ beaconId, x, y, ...beacon }: Beacon): MarkerOf<Bea
 		icon: './static/markers/antenna.png',
 		x,
 		y,
-		data: beacon
+		data: {
+			...beacon,
+			id: beaconId
+		}
 	};
 }
+
+export const deleteBeacon: (beaconId: number) => Observable<boolean> = (beaconId) => {
+	const requestConfig: RequestInit = {
+		headers: DEFAULT_HEADERS,
+		method: 'DELETE'
+	};
+
+	return fromFetch(new Request(DELETE_BEACON_URL + beaconId, requestConfig), {
+		selector: (response) => of(response.ok)
+	}).pipe(catchError(() => of(false))) as Observable<boolean>;
+};
