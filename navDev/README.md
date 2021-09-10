@@ -4,6 +4,12 @@ FreeRTOS based implementation of a Navigation device to run in ESP based devices
 By setting the device family on the IDF, the build options will change to manage the available modes.
 
 # Main components
+This device and its app has multiple services:
+
+- Connects to WiFi with roaming option (detecting best access point)
+- Connects to an MQTT broker, listens to information from navDev Topic such as Access Point information and valid beacons
+- Listens to Beacon transmission to measure RSSI, filters and process RSSI data to be publish through MQTT to a processor
+
 ![image](https://user-images.githubusercontent.com/11412210/131554192-e7a0d845-2f40-4ef9-a8d7-0b2eeb190ad4.png)
 
 
