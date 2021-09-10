@@ -1,5 +1,13 @@
 # Node RSSI Processor through MQTT
-This app connects to an MQTT broker, listens to information from navDev Topic, process RSSI data and generates trilateration information.
+
+This device and its app has multiple services:
+
+- Connects to WiFi with roaming option (detecting best access point)
+- Connects to an MQTT broker, listens to information from navDev Topic such as Access Point information and valid beacons
+- Listens to Beacon transmission to measure RSSI, filters and process RSSI data to be publish through MQTT to a processor
+
+![image](https://user-images.githubusercontent.com/5400635/132778863-a7017363-3ed1-4e88-b1f2-d98444a251b6.png)
+
 
 # Setup
 Configure the application by modifying appConfig.json in config folder
