@@ -1,3 +1,9 @@
+# Wifi Beacon - repeater
+
+Provides an additional (with know tssi) Access Point Beacon with the capacity to repeat wifi connection through a captive configuration portal.
+
+![image](https://user-images.githubusercontent.com/5400635/132779592-81936042-5d32-4f71-ad7f-665dbd5cd9eb.png)
+
 # ESP32 Environment Setup
 
 Before to start with the project description, here is a brief guide about how to install and configure ESP-IDF for project building and flashing the ESP32 with Linux.
