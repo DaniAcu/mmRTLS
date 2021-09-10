@@ -1,12 +1,12 @@
 # Node RSSI Processor through MQTT
 
-This device and its app has multiple services:
+This service, built on node to be dockerized and scalable, has the responsability to listen to navdev beaconing data from NavDevs and process the position based on active trilateration.
 
-- Connects to WiFi with roaming option (detecting best access point)
-- Connects to an MQTT broker, listens to information from navDev Topic such as Access Point information and valid beacons
-- Listens to Beacon transmission to measure RSSI, filters and process RSSI data to be publish through MQTT to a processor
+- Connects and listen to database changes comming for beacon (position, tssi, mac, etc)
+- Listens navdev beacon data, filters and resolves trilateration
+- Creates navdev identities based on Mac address and stores related positions
 
-![image](https://user-images.githubusercontent.com/5400635/132778863-a7017363-3ed1-4e88-b1f2-d98444a251b6.png)
+![image](https://user-images.githubusercontent.com/5400635/132779014-7d5e5504-070e-4c6f-9993-d867795872e9.png)
 
 
 # Setup
