@@ -5,7 +5,7 @@
 #include "nvsRegistry.h"
 #include <string.h>
 #include "ieee80211_structs.h"
-
+#include "rssiFilter.h"
 
 static const char *TAG = "packetProcessor";
 
@@ -16,6 +16,7 @@ typedef enum
 } KnownListStatus_t;
 
 static uint8_t knownNodes[ CONFIG_PROCESSOR_MAXKNOWN_NODES*MAC_ADDR_LENGTH  ]= { 0 };
+static rssiFilter_t filters[ CONFIG_PROCESSOR_MAXKNOWN_NODES ] = { };
 static bool knownChannels[ CONFIG_WIFI_CHANNEL_MAX ] = { 0 };
 
 static int processCheckIfKnown( uint8_t *mac );
@@ -52,6 +53,11 @@ rssiData_t processWifiPacket( const wifi_pkt_rx_ctrl_t *crtPkt, const uint8_t *p
     rssiData.isValid = ( KNOWN_LIST_EMPTY == ismacknonw  || ( ismacknonw >= 0 ) );
 
     if ( ismacknonw >= 0 ) {
+        rssiFilter_t *f = &filters[ ismacknonw ];
+        if( 0 == rssiFilterIsInitialized( f ) ){
+            rssiFilterInit( f, RSSI_FILTER_MODE_RMOW, RSSI_FILTER_DEFAULT_ALFA );
+        }
+        rssiData.rssi = rssiFilterPerform( f, rssiData.rssi );
         knownChannels[ rssiData.channel ] = true;
     }
     else if ( KNOWN_LIST_EMPTY != ismacknonw ) {

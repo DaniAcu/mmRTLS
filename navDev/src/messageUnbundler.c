@@ -39,7 +39,7 @@ static bool messageUnbundlerArrayOperationGetKnownNodes( const cJSON *item, size
         uint8_t imac[ MAC_ADDR_LENGTH ] = { 0 };
         uint8_t *knownList = (uint8_t*)nlist;
 
-        char *itemstr = cJSON_GetStringValue( item );
+        char *itemstr = cJSON_GetStringValue( (cJSON *)item );
         ESP_LOGI( TAG, "[%d]: %s", index, itemstr );
         utils_str2MAC( itemstr, imac );
         memcpy( &knownList[index*MAC_ADDR_LENGTH], imac, sizeof(imac) );
