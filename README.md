@@ -1,5 +1,5 @@
-[![ESP32-IDF-Build](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp32.yml/badge.svg)](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp32.yml)
-[![ESP8266-IDF-Build](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp8266.yml/badge.svg)](https://github.com/mlorenzati/mmRTLS/actions/workflows/esp8266.yml)
+[![ESP32-IDF-Build](https://github.com/globant/mmRTLS/actions/workflows/esp32.yml/badge.svg)](https://github.com/globant/mmRTLS/actions/workflows/esp32.yml)
+[![ESP8266-IDF-Build](https://github.com/globant/mmRTLS/actions/workflows/esp8266.yml/badge.svg)](https://github.com/globant/mmRTLS/actions/workflows/esp8266.yml)
 
 
 # mmRTLS
