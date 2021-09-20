@@ -7,7 +7,7 @@
 	import type { IndoorMap } from './indoor-map.model';
 	import { createMap } from './map';
 	import MapContext from './map-context';
-	import type { Marker } from '$src/streams/marker.types';
+	import type { Marker } from '$src/streams/markers/types';
 
 	const dispatch = createEventDispatcher<IndoorMapEvents>();
 

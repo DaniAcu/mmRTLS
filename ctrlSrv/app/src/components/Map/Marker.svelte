@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { MarkerType } from '$src/streams/marker.types';
-	import type { Marker, Position } from '$src/streams/marker.types';
+	import { MarkerType } from '$src/streams/markers/types';
+	import type { Marker, Position } from '$src/streams/markers/types';
 
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import type { IndoorMapMarker } from './indoor-map-marker.model';
@@ -15,6 +15,7 @@
 	} as Marker;
 
 	export let draggable = false;
+	export let disabled = false;
 
 	const map = MapContext.get();
 	let marker: IndoorMapMarker;
@@ -35,10 +36,17 @@
 	});
 
 	$: {
-		if (!isNaN(x) && !isNaN(y) && marker) {
-			marker.setPosition({ x, y });
+		if (marker) {
+			if (!isNaN(x) && !isNaN(y)) marker.setPosition({ x, y });
+			marker.setDisabled(disabled);
 		}
 	}
 
 	onDestroy(() => map.removeMarker({ x, y, id, icon, type }));
 </script>
+
+<style>
+	:global(.marker-icon--disabled) {
+		opacity: 0.5;
+	}
+</style>

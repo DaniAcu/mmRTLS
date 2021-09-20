@@ -3,14 +3,11 @@
 	import Button from 'smelte/src/components/Button/Button.svelte';
 	import Menu from 'smelte/src/components/Menu/Menu.svelte';
 	import Icon from 'smelte/src/components/Icon/Icon.svelte';
-	import MenuActions from './MenuActions';
+	import MenuActions from './Actions';
 
 	let open = false;
 
-	export const items = [
-		{ value: MenuActions.CREATE, text: 'Create a beacon' },
-		{ value: MenuActions.EDIT, text: 'Edit a beacon' },
-	];
+	export const items = [{ value: MenuActions.CREATE, text: 'Create a beacon' }];
 
 	interface Events {
 		choose: MenuActions;

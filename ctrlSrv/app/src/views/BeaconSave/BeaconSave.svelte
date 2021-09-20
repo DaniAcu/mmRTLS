@@ -1,15 +1,11 @@
 <script lang="ts">
 	import BeaconPosition from './steps/BeaconPosition.svelte';
 	import BeaconInfo from './steps/BeaconInfo.svelte';
-	import { createMenuActionsStream } from '$src/components/Menu/menu.stream';
-	import { MenuActions } from '$src/components/Menu/Menu';
 	import { menuActions } from '$src/components/Menu/menu.stream';
 	import { useSaveBeacon } from './beacon.hook';
 
 	let step = 1;
 	const saveBeacon = useSaveBeacon();
-
-	const isCreateBeaconEnabled$ = createMenuActionsStream(MenuActions.CREATE);
 
 	const next = () => step++;
 	const prev = () => step--;
@@ -25,10 +21,8 @@
 	};
 </script>
 
-{#if $isCreateBeaconEnabled$}
-	{#if step === 1}
-		<BeaconPosition on:previous={onClose} on:next={next} />
-	{:else if step === 2}
-		<BeaconInfo on:previous={prev} on:next={onSave} />
-	{/if}
+{#if step === 1}
+	<BeaconPosition on:previous={onClose} on:next={next} />
+{:else if step === 2}
+	<BeaconInfo on:previous={prev} on:next={onSave} />
 {/if}

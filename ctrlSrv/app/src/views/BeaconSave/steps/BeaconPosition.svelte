@@ -5,19 +5,20 @@
 	import Button from 'smelte/src/components/Button';
 	import Marker from '$src/components/Map/Marker.svelte';
 	import Dialog from '$src/components/Dialog/Dialog.svelte';
-	import { creatingBeacon } from '$src/streams/beacons';
 	import MapContext from '$src/components/Map/map-context';
-	import type { Marker as IMarker, Position } from '$src/streams/marker.types';
+	import type { Marker as IMarker, Position } from '$src/streams/markers/types';
+	import { BeaconController } from '$src/streams/beacons/beacons.controller';
 
 	const { next, previous } = createStepNavigationEvents();
 
 	const map = MapContext.get();
+	const defaultBeacon = BeaconController.get();
 
-	let positionX = map.getCenter().x;
-	let positionY = map.getCenter().y;
+	let positionX = defaultBeacon?.x || map.getCenter().x;
+	let positionY = defaultBeacon?.y || map.getCenter().y;
 
 	onMount(() => {
-		const beacon = creatingBeacon.getValue();
+		const beacon = BeaconController.get();
 		if (beacon.x) {
 			positionX = beacon.x;
 		}
@@ -35,7 +36,8 @@
 	function setPosition(position: Position) {
 		positionX = position.x;
 		positionY = position.y;
-		creatingBeacon.next({ x: positionX, y: positionY });
+		const beacon = BeaconController.get();
+		BeaconController.add({ ...beacon, x: positionX, y: positionY });
 	}
 
 	function onDrag(e: CustomEvent<DragEventDetail>): void {

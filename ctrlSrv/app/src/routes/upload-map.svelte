@@ -11,7 +11,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { FileUploader, getBase64 } from './file-uploader.model';
 	import Marker from '../components/Map/Marker.svelte';
-	import { BEACON_ICON_URL } from '../streams/beacons';
+	import { BEACON_ICON_URL } from '$src/streams/beacons/constants';
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';
 	import type { IndoorMapEvents } from '$src/interfaces/indoor-map.interface';
 

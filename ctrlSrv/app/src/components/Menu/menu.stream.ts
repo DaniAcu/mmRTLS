@@ -1,10 +1,19 @@
-import { Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import type MenuActions from './MenuActions';
+import type MenuActions from './Actions';
 
-export const menuActions = new Subject<MenuActions | null>();
+export const menuActions = new BehaviorSubject<MenuActions | null>(null);
 
 export const createMenuActionsStream = <T extends MenuActions>(
-	filterAction: T
-): Observable<boolean> => menuActions.asObservable().pipe(map((action) => action === filterAction));
+	filterAction: T | T[]
+): Observable<boolean> =>
+	menuActions
+		.asObservable()
+		.pipe(
+			map((action) =>
+				[...(filterAction instanceof Array ? filterAction : [filterAction])].some(
+					(a) => a === action
+				)
+			)
+		);

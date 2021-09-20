@@ -1,6 +1,6 @@
 import { setContext, getContext } from 'svelte';
 import type { IndoorMap } from './indoor-map.model';
-import type { Marker, MarkerEvents } from '$src/streams/marker.types';
+import type { Marker, MarkerEvents } from '$src/streams/markers/types';
 
 const key = Symbol('map');
 

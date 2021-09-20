@@ -1,5 +1,5 @@
 import Menu from './Menu.svelte';
-import MenuActions from './MenuActions';
+import MenuActions from './Actions';
 
 export { Menu, MenuActions };
 

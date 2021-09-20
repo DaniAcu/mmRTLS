@@ -5,7 +5,7 @@ import type { IIndoorPosition } from '$src/interfaces/position.interface';
 import type { MarkerIconSizeOptions } from '$src/interfaces/marker-icon.interface';
 import { IndoorMapMarker } from './indoor-map-marker.model';
 import { loadImage } from '../../utils/load-image.function';
-import type { Marker } from '$src/streams/marker.types';
+import type { Marker } from '$src/streams/markers/types';
 
 export class IndoorMap<T extends Marker> implements IConfigurableIndoorMap<T> {
 	private readonly leaflet = Leaflet.get();
@@ -18,14 +18,12 @@ export class IndoorMap<T extends Marker> implements IConfigurableIndoorMap<T> {
 		y: 100
 	};
 
-	constructor(
-		nativeElement: HTMLElement,
-		backgroundImage?: HTMLImageElement,
-		private defaultIconConfig: MarkerIconSizeOptions = {
-			origin: [16, 32],
-			size: 32
-		}
-	) {
+	private defaultIconConfig: MarkerIconSizeOptions = {
+		origin: [16, 32],
+		size: 32
+	};
+
+	constructor(nativeElement: HTMLElement, backgroundImage?: HTMLImageElement) {
 		this.leafletMap = this.leaflet.map(nativeElement, {
 			crs: this.leaflet.CRS.Simple,
 			center: [0, 0],
@@ -46,7 +44,7 @@ export class IndoorMap<T extends Marker> implements IConfigurableIndoorMap<T> {
 		}
 	}
 
-	public addMarker(marker: T, config?: Partial<MarkerConfig>): IndoorMapMarker {
+	public addMarker(marker: T, config: Partial<MarkerConfig>): IndoorMapMarker {
 		const { id } = marker;
 		const newMarker = new IndoorMapMarker(marker, {
 			...config,

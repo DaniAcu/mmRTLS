@@ -1,7 +1,6 @@
 <script lang="ts" context="module">
 	import type { LoadInput, LoadOutput } from '@sveltejs/kit';
 	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
-	import { deleteBeacon as deleteBeaconRequest } from '$src/streams/beacons';
 
 	const UPLOAD_MAP_ROUTE = '/upload-map';
 
@@ -39,61 +38,55 @@
 	import Marker from '../components/Map/Marker.svelte';
 	import Map from '../components/Map/Map.svelte';
 	import { Menu } from '$src/components/Menu/Menu';
-	import type { MenuActions } from '$src/components/Menu/Menu';
+	import Actions from '$src/components/Menu/Actions';
 	import BeaconDetails from '../views/BreaconDetails/BeaconDetails.svelte';
 	import NavDeviceDetails from '../views/NavDeviceDetails/NavDeviceDetails.svelte';
-	import BeaconCreate from '../views/BeaconCreate/BeaconCreate.svelte';
-	import { onMount$ } from '../utils/lifecycles';
-	import { getMarkers } from '../streams/markers';
+	import BeaconSave from '../views/BeaconSave/BeaconSave.svelte';
+	import { MapMarkerController } from '../streams/markers/markers.controller';
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';
-	import {
-		getBeaconClicked,
-		getNavDeviceClicked,
-		markerSubject
-	} from '$src/streams/markers-interactions';
-	import { menuActions } from '$src/components/Menu/menu.stream';
-	import type { Marker as IMarker } from '$src/streams/marker.types';
-	import type { BeaconDetailsEvent } from '$src/views/BreaconDetails/beacon-details.events';
-	import { deleteBeaconFromStore } from '$src/views/BeaconCreate/beacon.hook';
+	import { createMenuActionsStream, menuActions } from '$src/components/Menu/menu.stream';
+	import { MarkerType } from '$src/streams/markers/types';
+	import type { Marker as IMarker } from '$src/streams/markers/types';
+	import { BeaconController } from '$src/streams/beacons/beacons.controller';
+	import { useMarkers } from '$src/streams/markers/use-markers';
 
 	export let mapSize: IIndoorPosition;
 	export let backgroundImage: string;
 
-	const markers$ = onMount$.pipe(getMarkers);
+	useMarkers();
 
-	const beaconsMarkerClicked$ = getBeaconClicked(markers$);
-	const navDeviceMarkerClicked$ = getNavDeviceClicked(markers$);
+	const markers$ = MapMarkerController.get();
+
+	const currentModifiedBeacon$ = BeaconController.getObservable();
+
+	const beaconsMarkerClicked$ = MapMarkerController.getBeaconSelected();
+	const navDeviceMarkerClicked$ = MapMarkerController.getNavDeviceSelected();
 
 	const onMarkerClick = (e: CustomEvent<{ id: IMarker['id'] }>) => {
-		const { id } = e.detail;
-		markerSubject.next(id);
+		MapMarkerController.select(e.detail.id);
 	};
 
-	const onChange = (e: CustomEvent<MenuActions>) => {
+	const isSaveBeaconExperience$ = createMenuActionsStream([Actions.CREATE, Actions.EDIT]);
+	const onChange = (e: CustomEvent<Actions>) => {
 		menuActions.next(e.detail);
-	};
-
-	const deleteBeacon = (event: CustomEvent<BeaconDetailsEvent['delete']>) => {
-		const beaconMarker = event.detail;
-		deleteBeaconRequest(beaconMarker.data.id).subscribe((success) => {
-			if (success) {
-				deleteBeaconFromStore(beaconMarker.id);
-			} else {
-				// eslint-disable-next-line no-console
-				console.error('Beacon deletion failed.');
-			}
-		});
 	};
 </script>
 
 <div class="container">
 	<Map {backgroundImage} {mapSize} editMode={false}>
 		<Menu on:choose={onChange} />
-		<BeaconCreate />
-		{#each $markers$ as { x, y, id, icon } (id)}
-			<Marker {x} {y} {id} {icon} on:click={onMarkerClick} />
+		{#if $isSaveBeaconExperience$} <BeaconSave /> {/if}
+		{#each $markers$ as { x, y, id, icon, data, type } (id)}
+			<Marker
+				{x}
+				{y}
+				{id}
+				{icon}
+				on:click={onMarkerClick}
+				disabled={$currentModifiedBeacon$?.beaconId === data.id && type === MarkerType.BEACON}
+			/>
 		{/each}
 	</Map>
-	<BeaconDetails beacon={$beaconsMarkerClicked$} on:delete={deleteBeacon} />
+	<BeaconDetails beacon={$beaconsMarkerClicked$} />
 	<NavDeviceDetails navDevice={$navDeviceMarkerClicked$} />
 </div>
