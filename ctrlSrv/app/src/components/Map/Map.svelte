@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';
-	import { isSamePosition } from '../../utils/position-helpers.function';
 
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import type { IndoorMapEvents } from '../../interfaces/indoor-map.interface';
@@ -21,7 +20,7 @@
 
 	export let editMode = true;
 
-	let map: IndoorMap<Marker>;
+	let map: IndoorMap;
 	export let backgroundImage = './static/indoor-map.png';
 	$: {
 		map?.updateBackgroundImage(backgroundImage, editMode).then((newSize) => {
@@ -35,16 +34,9 @@
 		y: NaN
 	};
 
-	$: {
-		if (map) {
-			updateMapBounds(mapSize);
-		}
-	}
+	$: { if (map) updateMapBounds(mapSize); }
 
 	const updateMapBounds = (newBounds: IIndoorPosition) => {
-		if (isSamePosition(map.getBounds(), newBounds)) {
-			return;
-		}
 		map?.setBounds(newBounds);
 		mapSize = newBounds;
 		notifyBoundsUpdate(newBounds);

@@ -2,9 +2,9 @@ import { onDestroy, onMount } from 'svelte';
 import type { Subscription } from 'rxjs';
 import { zip } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { poll } from '$src/utils/operators';
+import { poll } from '$src/utils/poll';
 import { BeaconService } from '$src/streams/beacons/beacon-service';
-import { MapMarkerController } from './markers.controller';
+import { MarkersController } from './markers.controller';
 import { NavDeviceService } from '$src/streams/navdev/navdev.service';
 
 const flat = <T>(x: T[]) => x.flat();
@@ -18,7 +18,7 @@ export function useMarkers(): void {
 				poll(10000), // Polling interval is 10 seconds
 				map(flat)
 			)
-			.subscribe((markers) => MapMarkerController.set(markers));
+			.subscribe((markers) => MarkersController.set(markers));
 	});
 
 	onDestroy(() => {

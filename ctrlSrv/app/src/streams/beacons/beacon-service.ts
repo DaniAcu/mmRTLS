@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { menuActions } from '$src/components/Menu/menu.stream';
 import Actions from '$src/components/Menu/Actions';
-import { MapMarkerController } from '../markers/markers.controller';
+import { MarkersController } from '../markers/markers.controller';
 import createRequest from '$src/utils/request';
 import { BeaconAdapter } from './beacon.adapter';
 
@@ -30,7 +30,7 @@ export class BeaconService {
 
 		return createRequest<Beacon>(request, 'POST', beacon as Beacon).pipe(
 			map(BeaconAdapter.toMarker),
-			tap(MapMarkerController.update)
+			tap(MarkersController.update)
 		);
 	}
 
@@ -44,7 +44,7 @@ export class BeaconService {
 		return createRequest<Beacon>(request, 'PUT', beacon).pipe(
 			map((status) => (status ? beacon : ({} as Beacon))),
 			map(BeaconAdapter.toMarker),
-			tap(MapMarkerController.update)
+			tap(MarkersController.update)
 		);
 	}
 
@@ -57,7 +57,7 @@ export class BeaconService {
 
 		return createRequest(request, 'DELETE', beacon).pipe(
 			tap(() => {
-				MapMarkerController.remove(BeaconAdapter.toMarker(beacon));
+				MarkersController.remove(BeaconAdapter.toMarker(beacon));
 			})
 		);
 	}

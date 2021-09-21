@@ -1,16 +1,16 @@
 import type * as L from 'leaflet';
 import Leaflet from './leaflet/leaflet';
-import type { IConfigurableIndoorMap, MarkerConfig } from '$src/interfaces/indoor-map.interface';
+import type { MarkerConfig } from '$src/interfaces/indoor-map.interface';
 import type { IIndoorPosition } from '$src/interfaces/position.interface';
 import type { MarkerIconSizeOptions } from '$src/interfaces/marker-icon.interface';
 import { IndoorMapMarker } from './indoor-map-marker.model';
 import { loadImage } from '../../utils/load-image.function';
 import type { Marker } from '$src/streams/markers/types';
 
-export class IndoorMap<T extends Marker> implements IConfigurableIndoorMap<T> {
+export class IndoorMap {
 	private readonly leaflet = Leaflet.get();
 	private readonly leafletMap: L.Map;
-	private readonly markersMap: Map<T['id'], IndoorMapMarker> = new Map();
+	private readonly markersMap: Map<Marker['id'], IndoorMapMarker> = new Map();
 
 	private imageOverlay!: L.ImageOverlay;
 	private currentBounds: IIndoorPosition = {
@@ -44,7 +44,7 @@ export class IndoorMap<T extends Marker> implements IConfigurableIndoorMap<T> {
 		}
 	}
 
-	public addMarker(marker: T, config: Partial<MarkerConfig>): IndoorMapMarker {
+	public addMarker(marker: Marker, config: Partial<MarkerConfig>): IndoorMapMarker {
 		const { id } = marker;
 		const newMarker = new IndoorMapMarker(marker, {
 			...config,
@@ -58,8 +58,8 @@ export class IndoorMap<T extends Marker> implements IConfigurableIndoorMap<T> {
 		return newMarker;
 	}
 
-	public removeMarker(markerOrMarkerId: T['id'] | T): void {
-		const markerId = typeof markerOrMarkerId === 'object' ? markerOrMarkerId.id : markerOrMarkerId;
+	public removeMarker(identifier: Marker['id'] | Marker): void {
+		const markerId = typeof identifier === 'object' ? identifier.id : identifier;
 
 		const marker = this.markersMap.get(markerId);
 

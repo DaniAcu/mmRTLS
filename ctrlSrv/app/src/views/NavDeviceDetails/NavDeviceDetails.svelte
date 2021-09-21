@@ -2,12 +2,12 @@
 	import Dialog from '$src/components/Dialog/Dialog.svelte';
 
 	import type { MarkerOf, NavDeviceInfo } from '$src/streams/markers/types';
-	import { MapMarkerController } from '$src/streams/markers/markers.controller';
+	import { MarkersController } from '$src/streams/markers/markers.controller';
 
 	export let navDevice: MarkerOf<NavDeviceInfo> | null = null;
 
 	function onClose() {
-		MapMarkerController.unselect();
+		MarkersController.unselect();
 	}
 </script>
 

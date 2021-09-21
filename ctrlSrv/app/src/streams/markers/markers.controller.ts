@@ -9,7 +9,7 @@ type Marker = MarkerOf<MarkerInfo>;
 export const markersSubject = new BehaviorSubject<Marker[]>([]);
 const markerClicked = new Subject<string | null>();
 
-export const MapMarkerController = {
+export const MarkersController = {
 	get(): Observable<MarkerOf<MarkerInfo>[]> {
 		return markersSubject.asObservable();
 	},
