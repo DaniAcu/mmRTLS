@@ -118,9 +118,10 @@ static void mqttClientTask( void *pvParameter )
 {
     mqttClient_t *me = (mqttClient_t*)pvParameter;
     rssiData_t rssiData;    
-    uint8_t count = 0;  
+    BaseType_t queueDataStatus;
+    size_t cBundled;
     messageBundlerEntity_t UplinkPacket_Scan = MESSAGEBUNDLER_ENTITY_INITIALIZER;  /*the message bundler entity to serialize the JSON output*/
-    uint8_t thisMAC[ 6 ] = { 0 };
+    uint8_t thisMAC[ MAC_ADDR_LENGTH ] = { 0 };
     char thisMACStr[ 32 ] = { 0 };
 
     UplinkPacket_Scan.MACstr = thisMACStr;
@@ -129,24 +130,25 @@ static void mqttClientTask( void *pvParameter )
     mqttClientInitClient( me );
     ESP_LOGI( TAG, "mqtt_ClientTask Started, waiting for messages\n" );   
     for (;;) {
-        if ( pdPASS == xQueueReceive( me->messageQueue, &rssiData, portMAX_DELAY ) ) {
+        queueDataStatus = xQueueReceive( me->messageQueue, &rssiData, CONFIG_MQTT_NODATA_TIMEOUT/portTICK_PERIOD_MS ); 
+        if ( pdPASS == queueDataStatus ) {
             messageBundlerInsert( &UplinkPacket_Scan, &rssiData );
-            ++count;
         } 
         else {
-            ESP_LOGE( TAG, "xQueueReceive message");
+            ESP_LOGE( TAG, "xQueueReceive TIMEOUT: no data available." );
         }
-
-        if ( count > CONFIG_MQTT_MAXENTRIES_IN_TOPICDATA ) {
-            count = 0;
+        cBundled = messageBundlerItemsInside( &UplinkPacket_Scan );
+        if ( ( cBundled > CONFIG_MQTT_MAXENTRIES_IN_TOPICDATA ) || ( errQUEUE_EMPTY == queueDataStatus ) ) {
             ESP_LOGI( TAG, "Disabling scan mode to send data" );
             wifiHandlerScanMode( false );
             xEventGroupWaitBits( me->eventGroupWifi,  WIFI_CONNECTED, false, true, portMAX_DELAY );
             ESP_LOGI( TAG, "Connecting MQTT Client..." );
             mqttClientConnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_CONNECTED | MQTT_CLIENT_SUBSCRIBED, true, true, portMAX_DELAY );
-            ESP_LOGI( TAG, "Sending data..." );
-            messageBundlerPublish( &UplinkPacket_Scan, mqttClientPacketSend, me->client );
+            if ( cBundled > 0u ) { /*if timeout, send any available data that was already bundled*/
+                ESP_LOGI( TAG, "Sending data..." );
+                messageBundlerPublish( &UplinkPacket_Scan, mqttClientPacketSend, me->client );
+            }
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_EVENT_PUBLISHED, true, true, CONFIG_MQTT_RCVDATA_TIMEOUT/portTICK_PERIOD_MS );
             ESP_LOGI( TAG, "Stopping MQTT Client..." );
             mqttClientDisconnect( me );
