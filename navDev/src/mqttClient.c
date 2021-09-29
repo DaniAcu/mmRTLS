@@ -142,7 +142,7 @@ static void mqttClientTask( void *pvParameter )
             ESP_LOGI( TAG, "Disabling scan mode to send data" );
             wifiHandlerScanMode( false );
             xEventGroupWaitBits( me->eventGroupWifi,  WIFI_CONNECTED, false, true, portMAX_DELAY );
-            ESP_LOGI( TAG, "Connecting MQTT Client..." );
+            ESP_LOGI( TAG, "Connecting to MQTT broker %s", CONFIG_MQTT_BROKER_URI );
             mqttClientConnect( me );
             xEventGroupWaitBits( me->eventGroupMQTT,  MQTT_CLIENT_CONNECTED | MQTT_CLIENT_SUBSCRIBED, true, true, portMAX_DELAY );
             if ( cBundled > 0u ) { /*if timeout, send any available data that was already bundled*/
