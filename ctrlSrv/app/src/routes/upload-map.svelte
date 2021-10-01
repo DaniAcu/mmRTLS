@@ -9,7 +9,7 @@
 	import Button from 'smelte/src/components/Button';
 	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
 	import { onDestroy, onMount } from 'svelte';
-	import { FileUploader, getBase64 } from './file-uploader.model';
+	import { FileUploader, getBase64 } from '$src/utils/file-uploader.model';
 	import Marker from '../components/Map/Marker.svelte';
 	import { BEACON_ICON_URL } from '$src/streams/beacons/constants';
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';

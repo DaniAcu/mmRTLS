@@ -1,39 +1,3 @@
-<script lang="ts" context="module">
-	import type { LoadInput, LoadOutput } from '@sveltejs/kit';
-	import { mapBackgroundImage, mapMaxPosition } from '../store/map-background-image.store';
-
-	const UPLOAD_MAP_ROUTE = '/upload-map';
-
-	export const load: (
-		input: LoadInput
-	) => Promise<
-		LoadOutput<{
-			mapSize: IIndoorPosition;
-			backgroundImage: string;
-		}>
-	> = async () => {
-		const config = mapMaxPosition.value;
-		const backgroundImage = mapBackgroundImage.value;
-		const configIsLoaded = !!config;
-		return new Promise((resolve) => {
-			resolve(
-				configIsLoaded && !!backgroundImage
-					? {
-							status: 200,
-							props: {
-								mapSize: config as IIndoorPosition,
-								backgroundImage
-							}
-					  }
-					: {
-							status: 303,
-							redirect: UPLOAD_MAP_ROUTE
-					  }
-			);
-		});
-	};
-</script>
-
 <script lang="ts">
 	import Marker from '../components/Map/Marker.svelte';
 	import Map from '../components/Map/Map.svelte';
@@ -42,28 +6,29 @@
 	import BeaconDetails from '../views/BreaconDetails/BeaconDetails.svelte';
 	import NavDeviceDetails from '../views/NavDeviceDetails/NavDeviceDetails.svelte';
 	import BeaconSave from '../views/BeaconSave/BeaconSave.svelte';
-	import { MapMarkerController } from '../streams/markers/markers.controller';
+	import { MarkersController } from '../streams/markers/markers.controller';
 	import type { IIndoorPosition } from '$src/interfaces/position.interface';
 	import { createMenuActionsStream, menuActions } from '$src/components/Menu/menu.stream';
 	import { MarkerType } from '$src/streams/markers/types';
 	import type { Marker as IMarker } from '$src/streams/markers/types';
 	import { BeaconController } from '$src/streams/beacons/beacons.controller';
 	import { useMarkers } from '$src/streams/markers/use-markers';
+	import { mapBackgroundImage, mapMaxPosition } from "$src/store/map-background-image.store";
 
-	export let mapSize: IIndoorPosition;
-	export let backgroundImage: string;
+	const mapSize = mapMaxPosition.getValue() as IIndoorPosition;
+	const backgroundImage = mapBackgroundImage.getValue();
 
 	useMarkers();
 
-	const markers$ = MapMarkerController.get();
+	const markers$ = MarkersController.get();
 
 	const currentModifiedBeacon$ = BeaconController.getObservable();
 
-	const beaconsMarkerClicked$ = MapMarkerController.getBeaconSelected();
-	const navDeviceMarkerClicked$ = MapMarkerController.getNavDeviceSelected();
+	const beaconsMarkerClicked$ = MarkersController.getBeaconSelected();
+	const navDeviceMarkerClicked$ = MarkersController.getNavDeviceSelected();
 
 	const onMarkerClick = (e: CustomEvent<{ id: IMarker['id'] }>) => {
-		MapMarkerController.select(e.detail.id);
+		MarkersController.select(e.detail.id);
 	};
 
 	const isSaveBeaconExperience$ = createMenuActionsStream([Actions.CREATE, Actions.EDIT]);
@@ -83,7 +48,9 @@
 				{id}
 				{icon}
 				on:click={onMarkerClick}
-				disabled={$currentModifiedBeacon$?.beaconId === data.id && type === MarkerType.BEACON}
+				disabled={
+					$currentModifiedBeacon$?.beaconId === data.id && type === MarkerType.BEACON
+				}
 			/>
 		{/each}
 	</Map>

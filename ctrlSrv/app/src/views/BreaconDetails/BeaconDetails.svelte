@@ -7,14 +7,14 @@
 	import BeaconDelete from '../BeaconDelete/BeaconDelete.svelte';
 	import Actions from '$src/components/Menu/Actions';
 	import { createMenuActionsStream, menuActions } from '$src/components/Menu/menu.stream';
-	import { MapMarkerController } from '$src/streams/markers/markers.controller';
+	import { MarkersController } from '$src/streams/markers/markers.controller';
 
 	const isEditBeaconEnabled$ = createMenuActionsStream(Actions.EDIT);
 
 	export let beacon: MarkerOf<BeaconInfo> | null = null;
 
 	function onClose(): void {
-		MapMarkerController.unselect();
+		MarkersController.unselect();
 	}
 
 	function onEdit(): void {

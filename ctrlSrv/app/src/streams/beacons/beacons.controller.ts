@@ -4,7 +4,7 @@ import type { Beacon } from '$src/interfaces/beacon.interface';
 import { menuActions } from '$src/components/Menu/menu.stream';
 import Actions from '$src/components/Menu/Actions';
 import { BeaconService } from './beacon-service';
-import { MapMarkerController } from '../markers/markers.controller';
+import { MarkersController } from '../markers/markers.controller';
 
 export const BeaconController = (function () {
 	/* Creation beaconstream */
@@ -19,7 +19,7 @@ export const BeaconController = (function () {
 		map((beacon) => !!beacon.id),
 		tap((isSaved) => {
 			if (!isSaved) return;
-			MapMarkerController.unselect();
+			MarkersController.unselect();
 			BeaconController.reset();
 			menuActions.next(null);
 		})
