@@ -164,7 +164,7 @@ static void mqttClientTask( void *pvParameter )
 static void mqttClientPacketSend( char *packet, void *client )
 {
     esp_mqtt_client_handle_t hClient = (esp_mqtt_client_handle_t)client;
-    ESP_LOGI( TAG, "esp_mqtt_client_publish, ret/msg_id=%d", esp_mqtt_client_publish( hClient, CONFIG_MQTT_TOPIC_DATA, packet , 0, 1, 0 ) ); 
+    ESP_LOGI( TAG, "esp_mqtt_client_publish, ret/msg_id=%d", esp_mqtt_client_publish( hClient, CONFIG_MQTT_TOPIC_DATA, packet , strlen(packet), 2, 0 ) ); 
 }
 /*============================================================================*/
 esp_err_t mqttClientStart( QueueHandle_t messageQueue, EventGroupHandle_t eventGroup )
