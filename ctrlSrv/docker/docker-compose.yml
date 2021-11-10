@@ -23,6 +23,37 @@ services:
     ports:
       - 3306:3306
     restart: unless-stopped
+    networks:
+      - backend
+
+  mmrtls-rest:
+    build: ../rest
+    image: mmrtls-ctrlsrv-rest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mariadb
+    networks:
+      - backend
+  
+  mmrtls-app:
+    build: ../app
+    image: mmrtls-ctrlsrv-app
+    ports:
+      - 8000:8000
+      - 15000:15000
+    networks:
+      - backend
+    command: npm start
+
+  mmrtls-processor:
+    build: ../processor
+    image: mmrtls-ctrlsrv-processor
+    depends_on:
+      - mariadb
+      - mosquitto
+    networks:
+      - backend
 
   adminer:
     container_name: adminer
@@ -30,3 +61,6 @@ services:
     restart: unless-stopped
     ports:
       - 9080:8080
+
+networks:
+    backend:
